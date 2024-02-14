@@ -1,0 +1,11 @@
+{
+	"folders": [
+		{
+			"path": "Bootloader"
+		},
+		{
+			"path": "Application"
+		}
+	],
+	"settings": {}
+}
