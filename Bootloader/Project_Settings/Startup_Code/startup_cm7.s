@@ -1,7 +1,7 @@
 /*==================================================================================================
 *   Project              : RTD AUTOSAR 4.7
 *   Platform             : CORTEXM
-*   Peripheral           : 
+*   Peripheral           :
 *   Dependencies         : none
 *
 *   Autosar Version      : 4.7.0
@@ -61,25 +61,6 @@
 #define CM7_ITCMCR                  0xE000EF90
 #define CM7_DTCMCR                  0xE000EF94
 
-#define SBAF_BOOT_MARKER            (0x5AA55AA5)
-#define CM7_0_ENABLE_SHIFT          (0)
-#define CM7_1_ENABLE_SHIFT          (1)
-#define CM7_2_ENABLE_SHIFT          (2)
-
-#define CM7_0_ENABLE                (1)
-
-#ifndef CM7_1_ENABLE
-    #define CM7_1_ENABLE            (0)
-#endif
-#ifndef CM7_2_ENABLE
-    #define CM7_2_ENABLE            (0)
-#endif
-#define CM7_0_VTOR_ADDR             (__CORE0_VTOR)
-#define CM7_1_VTOR_ADDR             (__CORE1_VTOR)
-#define CM7_2_VTOR_ADDR             (__CORE2_VTOR)
-#define XRDC_CONFIG_ADDR            (0)
-#define LF_CONFIG_ADDR              (0)
-
     .syntax unified
     .arch armv7-m
 /* Table for copying and zeroing */
@@ -127,6 +108,7 @@
   .long __BSS_SRAM_END
 
 .globl RESET_CATCH_CORE
+#ifdef MCAL_TESTING_ENVIRONMENT
 .globl _core_loop
 .section ".core_loop","ax"
 .thumb
@@ -137,20 +119,7 @@ _core_loop:
     nop
     nop
     b _core_loop
-
-.section ".boot_header","ax"
-  .long SBAF_BOOT_MARKER /* IVT marker */
-  .long (CM7_0_ENABLE << CM7_0_ENABLE_SHIFT) | (CM7_1_ENABLE << CM7_1_ENABLE_SHIFT) | (CM7_2_ENABLE << CM7_2_ENABLE_SHIFT) /* Boot configuration word */
-  .long 0 /* Reserved */
-  .long CM7_0_VTOR_ADDR /* CM7_0 Start address */
-  .long 0 /* Reserved */
-  .long CM7_1_VTOR_ADDR /* CM7_1 Start address */
-  .long 0 /* Reserved */
-  .long CM7_2_VTOR_ADDR /* CM7_2 Start address */
-  .long 0 /* Reserved */
-  .long XRDC_CONFIG_ADDR /* XRDC configuration pointer */
-  .long LF_CONFIG_ADDR /* Lifecycle configuration pointer */
-  .long 0 /* Reserved */
+#endif
 
 .globl VTABLE
 .section ".startup","ax"
@@ -447,12 +416,14 @@ ITCM_LOOP:
     blt     ITCM_LOOP
 ITCM_LOOP_END:
 
+#ifndef NDEBUG
 DebuggerHeldCoreLoop:
     ldr  r0, =RESET_CATCH_CORE
     ldr  r0, [r0]
     ldr  r1, =0x5A5A5A5A
     cmp  r0, r1
     beq  DebuggerHeldCoreLoop
+#endif
 
 /******************************************************************/
 /* Autosar Guidance   - The start-up code shall initialize the    */

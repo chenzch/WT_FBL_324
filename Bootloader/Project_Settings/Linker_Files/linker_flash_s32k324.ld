@@ -1,7 +1,7 @@
 /*==================================================================================================
 *   Project              : RTD AUTOSAR 4.7
 *   Platform             : CORTEXM
-*   Peripheral           : 
+*   Peripheral           :
 *   Dependencies         : none
 *
 *   Autosar Version      : 4.7.0
@@ -62,8 +62,6 @@ SECTIONS
 
     .pflash :
     {
-        KEEP(*(.boot_header))
-        . = ALIGN(8192);  /* The minimum erase size of C40 Flash IP is 8kb */
         __text_start = .;
         __interrupts_init_start = .;
         KEEP(*(.intc_vector))
@@ -113,6 +111,12 @@ SECTIONS
     . = ALIGN(4);
     __text_end = .;
     __sram_data_rom = __text_end;
+
+    .dflash :
+    {
+        KEEP(*(.boot_header))
+        /* . = ALIGN(8192); */ /* The minimum erase size of C40 Flash IP is 8kb */
+    } > int_dflash
 
     .sram_bss (NOLOAD) :
     {
@@ -323,8 +327,8 @@ SECTIONS
     __ZERO_TABLE             = __zero_table;
 
     __RAM_INIT               = 1;
-    __ITCM_INIT              = 1;
-    __DTCM_INIT              = 1;
+    __ITCM_INIT              = 0 /* 1 */;
+    __DTCM_INIT              = 0 /* 1 */;
 
     Fls_ACEraseRomStart      = __acfls_code_rom_start;
     Fls_ACEraseRomEnd        = __acfls_code_rom_end;

@@ -30,6 +30,7 @@
 
 /* Including necessary configuration files. */
 #include "Mcal.h"
+#include "Mcu.h"
 
 /* User includes */
 
@@ -42,6 +43,21 @@
 int main(void)
 {
     /* Write your code here */
+#if (MCU_PRECOMPILE_SUPPORT == STD_ON)
+    Mcu_Init(NULL_PTR);
+#elif (MCU_PRECOMPILE_SUPPORT == STD_OFF)
+    Mcu_Init(&Mcu_Config);
+#endif /* (MCU_PRECOMPILE_SUPPORT == STD_ON) */
+
+    Mcu_InitClock(McuClockSettingConfig_0);
+
+    while (MCU_PLL_LOCKED != Mcu_GetPllStatus()) {
+        /* Busy wait until the System PLL is locked */
+    }
+
+    Mcu_DistributePllClock();
+
+    Mcu_SetMode(McuModeSettingConf_0);
 
     for(;;);
 }
