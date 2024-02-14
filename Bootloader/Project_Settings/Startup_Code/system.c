@@ -1,7 +1,7 @@
 /*==================================================================================================
 *   Project              : RTD AUTOSAR 4.7
 *   Platform             : CORTEXM
-*   Peripheral           : 
+*   Peripheral           :
 *   Dependencies         : none
 *
 *   Autosar Version      : 4.7.0
@@ -42,76 +42,10 @@ extern "C" {
 * 2) needed interfaces from external units
 * 3) internal and external interfaces from this unit
 ==================================================================================================*/
-#include "Platform_Types.h"
+#include "platform.h"
 #include "Mcal.h"
 #include "system.h"
 #include "core_specific.h"
-
-#ifdef S32K344
-    #include "S32K344_SCB.h"
-    #include "S32K344_MPU.h"
-    #include "S32K344_MSCM.h"
-#endif
-#ifdef S32K342
-    #include "S32K342_SCB.h"
-    #include "S32K342_MPU.h"
-    #include "S32K342_MSCM.h"
-#endif
-#ifdef S32K341
-    #include "S32K341_SCB.h"
-    #include "S32K341_MPU.h"
-    #include "S32K341_MSCM.h"
-#endif
-#ifdef S32K324
-    #include "S32K324_SCB.h"
-    #include "S32K324_MPU.h"
-    #include "S32K324_MSCM.h"
-#endif
-#ifdef S32K314
-    #include "S32K314_SCB.h"
-    #include "S32K314_MPU.h"
-    #include "S32K314_MSCM.h"
-#endif
-#ifdef S32K312
-    #include "S32K312_SCB.h"
-    #include "S32K312_MPU.h"
-    #include "S32K312_MSCM.h"
-#endif
-#ifdef S32K322
-    #include "S32K322_SCB.h"
-    #include "S32K322_MPU.h"
-    #include "S32K322_MSCM.h"
-#endif
-#if defined(S32K396) || defined(S32K394)
-    #include "S32K39_SCB.h"
-    #include "S32K39_MPU.h"
-    #include "S32K39_MSCM.h"
-#endif
-#if defined(S32K374) || defined(S32K376)
-    #include "S32K37_SCB.h"
-    #include "S32K37_MPU.h"
-    #include "S32K37_MSCM.h"
-#endif
-#if defined(S32K358) || defined(S32K328) || defined(S32K338) || defined(S32K348)
-    #include "S32K358_SCB.h"
-    #include "S32K358_MPU.h"
-    #include "S32K358_MSCM.h"
-#endif
-#ifdef S32K388
-    #include "S32K388_SCB.h"
-    #include "S32K388_MPU.h"
-    #include "S32K388_MSCM.h"
-#endif
-#if defined(S32K311) || defined(S32K310)
-    #include "S32K311_SCB.h"
-    #include "S32K311_MPU.h"
-    #include "S32K311_MSCM.h"
-#endif
-#if defined(S32M276) || defined(S32M274)
-    #include "S32M27x_SCB.h"
-    #include "S32M27x_MPU.h"
-    #include "S32M27x_MSCM.h"
-#endif
 
 /*==================================================================================================
 *                                      FILE VERSION CHECKS
@@ -153,7 +87,7 @@ extern  uint32 __RAM_SHAREABLE_SIZE[];
 /* MPU setting */
 #define CPU_MPU_MEMORY_COUNT (16U)
 
-/* Check symbol and linker information in linker file of each derivative 
+/* Check symbol and linker information in linker file of each derivative
  * Region 15: Only S32K388
 */
 /*
@@ -706,7 +640,7 @@ void Enable_FPU(void)
 {
 #ifdef ENABLE_FPU
     /* Enable CP10 and CP11 coprocessors */
-    S32_SCB->CPACR |= (S32_SCB_CPACR_CPx(10U, 3U) | S32_SCB_CPACR_CPx(11U, 3U)); 
+    S32_SCB->CPACR |= (S32_SCB_CPACR_CPx(10U, 3U) | S32_SCB_CPACR_CPx(11U, 3U));
 
     MCAL_DATA_SYNC_BARRIER();
     MCAL_INSTRUCTION_SYNC_BARRIER();;

@@ -327,8 +327,8 @@ SECTIONS
     __ZERO_TABLE             = __zero_table;
 
     __RAM_INIT               = 1;
-    __ITCM_INIT              = 0 /* 1 */;
-    __DTCM_INIT              = 0 /* 1 */;
+    __ITCM_INIT              = 1;
+    __DTCM_INIT              = 1;
 
     Fls_ACEraseRomStart      = __acfls_code_rom_start;
     Fls_ACEraseRomEnd        = __acfls_code_rom_end;

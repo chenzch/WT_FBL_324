@@ -16,21 +16,12 @@
  * limitations under the License.
  */
 
-#include "Std_Types.h"
+#include "platform.h"
 
 #define SBAF_BOOT_MARKER            (0x5AA55AA5)
 #define CM7_0_ENABLE_SHIFT          (0)
 #define CM7_1_ENABLE_SHIFT          (1)
 #define CM7_2_ENABLE_SHIFT          (2)
-
-#define CM7_0_ENABLE                (1)
-
-#ifndef CM7_1_ENABLE
-    #define CM7_1_ENABLE            (0)
-#endif
-#ifndef CM7_2_ENABLE
-    #define CM7_2_ENABLE            (0)
-#endif
 
 extern const uint32_t __CORE0_VTOR[];
 extern const uint32_t __CORE1_VTOR[];
