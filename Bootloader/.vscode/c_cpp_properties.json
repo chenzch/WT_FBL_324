@@ -1,0 +1,19 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "${workspaceFolder}/**"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE",
+                "MPU_ENABLE",
+                "D_CACHE_ENABLE",
+                "I_CACHE_ENABLE"
+            ]
+        }
+    ],
+    "version": 4
+}

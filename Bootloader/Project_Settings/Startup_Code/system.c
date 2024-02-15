@@ -87,30 +87,6 @@ extern  uint32 __RAM_SHAREABLE_SIZE[];
 /* MPU setting */
 #define CPU_MPU_MEMORY_COUNT (16U)
 
-/* Check symbol and linker information in linker file of each derivative
- * Region 15: Only S32K388
-*/
-/*
-  Region  Description       Start                       End                                      Size[KB]  Type              Inner Cache Policy    Outer Cache Policy    Shareable    Executable    Privileged Access    Unprivileged Access
---------  -------------     ----------                  ----------                             ----------  ----------------  --------------------  --------------------  -----------  ------------  -------------------  ---------------------
-       0  Whole memory map  0x00000000                  0xFFFFFFFF                                4194304  Strongly Ordered  None                  None                  Yes          No            No Access            No Access
-       1  ITCM              0x00000000                  0x0000FFFF                                     64  Strongly Ordered  None                  None                  Yes          Yes           Read/Write           No Access
-       2  Program Flash 1   0x40000000                  PFLASH SIZE                           PFLASH SIZE  Normal            Write-Back/Allocate   Write-Back/Allocate   No           Yes           Read-Only            Read-Only
-       3  Data Flash        0x10000000                  0x1003FFFF                                    256  Normal            Write-Back/Allocate   Write-Back/Allocate   No           No            Read-Only            Read-Only
-       4  UTEST             0x1B000000                  0x1B001FFF                                   8192  Normal            Write-Back/Allocate   Write-Back/Allocate   No           No            Read-Only            Read-Only
-       5  DTCM              0x20000000                  0x2001FFFF                                    128  Normal            None                  None                  No           Yes           Read/Write           Read/Write
-       6  SRAM CACHE        __RAM_CACHEABLE_START      __RAM_CACHEABLE_END           __RAM_CACHEABLE_SIZE  Normal            Write-Back/Allocate   Write-Back/Allocate   No           Yes           Read/Write           Read/Write
-       7  SRAM N-CACHE      __RAM_NO_CACHEABLE_START      __RAM_NO_CACHEABLE_END  __RAM_NO_CACHEABLE_SIZE  Normal            None                  None                  Yes          No            Read/Write           Read/Write
-       8  SRAM SHARED       __RAM_SHAREABLE_START      __RAM_SHAREABLE_END           __RAM_SHAREABLE_SIZE  Normal            None                  None                  Yes          No            Read/Write           Read/Write
-       9  AIPS_0/1/2        0x40000000                 0x405FFFFF                                    6144  Strongly ordered  None                  None                  Yes          No            Read/Write           Read/Write
-      10  AIPS_3            0x40600000                 0x407FFFFF                                    2048  Strongly ordered  None                  None                  Yes          No            Read/Write           Read/Write
-      11  QSPI Rx           0x67000000                 0x670003FF                                       1  Strongly ordered  None                  None                  Yes          No            Read/Write           Read/Write
-      12  QSPI AHB          0x68000000                 0x6FFFFFFF                                  131072  Normal            Write-Back/Allocate   Write-Back/Allocate   No           Yes           Read/Write           Read/Write
-      13  PPB               0xE0000000                 0xE00FFFFF                                    1024  Strongly Ordered  None                  None                  Yes          No            Read/Write           Read/Write
-      14  Program Flash 2   0x00800000                 PFLASH SIZE                            PFLASH SIZE  Normal            Write-Back/Allocate   Write-Back/Allocate   No           Yes           Read-Only            Read-Only
-      15  ACE               0x44000000                 0x440003FF                                       1  Strongly-ordered  None                  None                  Yes          No            Read/Write           Read/Write
-*/
-
 /*==================================================================================================
 *                                       LOCAL VARIABLES
 ==================================================================================================*/
@@ -399,6 +375,11 @@ void SystemInit(void)
     }
 
     enum {
+        MPU_EXECUTE    = 0,
+        MPU_NO_EXECUTE = 1,
+    };
+
+    enum {
         MPU_AP_NOACCESS    = 0,
         MPU_AP_RW_NOACCESS = 1,
         MPU_AP_RW_RO       = 2,
@@ -439,128 +420,201 @@ void SystemInit(void)
         MPU_SIZE_2GB   = 30,
         MPU_SIZE_4GB   = 31,
     };
+
+    /*********************************************************************************************
+     * TEX S C B Memory type      Description                         Shareable
+     * --- - - - ---------------- ----------------------------------- ---------
+     *  0  1 0 0 Strongly Ordered Strongly ordered                    Yes
+     *  0  1 0 1 Device           Shared device                       Yes
+     *  0  S 1 0 Normal           Write through, no write allocate    S bit
+     *  0  S 1 1 Normal           Write-back, no write allocate       S bit
+     *  1  S 0 0 Normal           Non-cacheable                       S bit
+     *  1  0 0 1 Reserved         Reserved                            Reserved
+     *  1  0 1 0 Undefined        Undefined                           Undefined
+     *  1  S 1 1 Normal           Write-back, write and read allocate S bit
+     *  2  0 0 0 Device           Non-shareable device                No
+     *  2  0 0 1 Reserved         Reserved                            Reserved
+     ********************************************************************************************/
+    enum {
+        MPU_TYPE_WriteThrough         = 0b0010,
+        MPU_TYPE_WriteBack            = 0b0011,
+        MPU_TYPE_StrongOrder          = 0b0100,
+        MPU_TYPE_SharedDevice         = 0b0101,
+        MPU_TYPE_SharedWriteThrough   = 0b0110,
+        MPU_TYPE_SharedWriteBack      = 0b0111,
+        MPU_TYPE_NoCache              = 0b1000,
+        MPU_TYPE_Reserved             = 0b1001,
+        MPU_TYPE_Undefined            = 0b1010,
+        MPU_TYPE_WriteBackAlloc       = 0b1011,
+        MPU_TYPE_SharedNoCache        = 0b1100,
+        MPU_TYPE_SharedWriteBackAlloc = 0b1111,
+        MPU_TYPE_Device               = 0b10000,
+        MPU_TYPE_Reserved1            = 0b10001,
+    };
+
 #define BIT(X) ((1UL) << (uint32_t)(X))
-#define MPU_REGION(Addr, Access, Size, XN, TEX, S, C, B, SRD)                                      \
+#define MPU_REGION(Addr, Access, Size, XN, TYPE, SRD)                                              \
     do {                                                                                           \
         ASSERT(0 == ((uint32_t)(Addr) & (BIT(Size) - 1)));                                         \
         S32_MPU->RNR  = regionNum++;                                                               \
         S32_MPU->RBAR = (uint32)(Addr);                                                            \
-        S32_MPU->RASR = S32_MPU_RASR_XN(XN) | S32_MPU_RASR_AP(Access) | S32_MPU_RASR_TEX(TEX) |    \
-                        S32_MPU_RASR_S(S) | S32_MPU_RASR_C(C) | S32_MPU_RASR_B(B) |                \
+        S32_MPU->RASR = S32_MPU_RASR_XN(XN) | S32_MPU_RASR_AP(Access) |                            \
+                        S32_MPU_RASR_TEX((TYPE) >> 3) | S32_MPU_RASR_S(((TYPE) >> 2) & 1) |        \
+                        S32_MPU_RASR_C(((TYPE) >> 1) & 1) | S32_MPU_RASR_B((TYPE) & 1) |           \
                         S32_MPU_RASR_SRD(SRD) | S32_MPU_RASR_SIZE(Size) | S32_MPU_RASR_ENABLE(1);  \
     } while (0)
     /* Init MPU table for memory layout*/
+
+    /**********************************************************************************************
+     *  Check symbol and linker information in linker file of each derivative
+     *  Region 15: Only S32K388
+     *********************************************************************************************/
+    /**********************************************************************************************
+     *
+     * Region Description      Start               End                         Size[KB]  Type              Inner Cache Policy    Outer Cache Policy    Shareable    Executable    Privileged Access    Unprivileged Access
+     * ------ ---------------- ----------          ----------                ----------  ----------------  --------------------  --------------------  -----------  ------------  -------------------  ---------------------
+     *   0    Whole memory map 0x00000000          0xFFFFFFFF                   4194304  Strongly Ordered  None                  None                  Yes          No            No Access            No Access
+     *   1    ITCM             0x00000000          0x0000FFFF                        64  Normal            None                  None                  No           Yes           Read/Write           Read/Write
+     *   2    Program Flash 1  0x40000000          PFLASH SIZE              PFLASH SIZE  Normal            Write-Back/Allocate   Write-Back/Allocate   No           Yes           Read-Only            Read-Only
+     *   3    Data Flash       0x10000000          0x1003FFFF                       256  Normal            Write-Back/Allocate   Write-Back/Allocate   No           No            Read-Only            Read-Only
+     *   4    UTEST            0x1B000000          0x1B001FFF                         8  Normal            Write-Back/Allocate   Write-Back/Allocate   No           No            Read-Only            Read-Only
+     *   5    DTCM             0x20000000          0x2001FFFF                       128  Normal            None                  None                  No           Yes           Read/Write           Read/Write
+     *   6    SRAM CACHE       _CACHEABLE_START    _CACHEABLE_END       _CACHEABLE_SIZE  Normal            Write-Back/Allocate   Write-Back/Allocate   No           Yes           Read/Write           Read/Write
+     *   7    SRAM N-CACHE     _NO_CACHEABLE_START _NO_CACHEABLE_END _NO_CACHEABLE_SIZE  Normal            None                  None                  Yes          No            Read/Write           Read/Write
+     *   8    SRAM SHARED      _SHAREABLE_START    _SHAREABLE_END       _SHAREABLE_SIZE  Normal            None                  None                  Yes          No            Read/Write           Read/Write
+     *   9    AIPS_0/1/2       0x40000000          0x405FFFFF                      6144  Strongly ordered  None                  None                  Yes          No            Read/Write           Read/Write
+     *   10   AIPS_3           0x40600000          0x407FFFFF                      2048  Strongly ordered  None                  None                  Yes          No            Read/Write           Read/Write
+     *   11   QSPI Rx          0x67000000          0x670003FF                         1  Strongly ordered  None                  None                  Yes          No            Read/Write           Read/Write
+     *   12   QSPI AHB         0x68000000          0x6FFFFFFF                    131072  Normal            Write-Back/Allocate   Write-Back/Allocate   No           Yes           Read/Write           Read/Write
+     *   13   PPB              0xE0000000          0xE00FFFFF                      1024  Strongly Ordered  None                  None                  Yes          No            Read/Write           Read/Write
+     *   14   Program Flash 2  0x00800000          PFLASH SIZE              PFLASH SIZE  Normal            Write-Back/Allocate   Write-Back/Allocate   No           Yes           Read-Only            Read-Only
+     *   15   ACE              0x44000000          0x440003FF                         1  Strongly-ordered  None                  None                  Yes          No            Read/Write           Read/Write
+     *********************************************************************************************/
+
     /* Cover all memory on device as background set all memory as strong-order and no access*/
-    MPU_REGION(0, MPU_AP_NOACCESS, MPU_SIZE_4GB, 1, 0, 1, 0, 0, 0);
+    MPU_REGION(0, MPU_AP_NOACCESS, MPU_SIZE_4GB, MPU_NO_EXECUTE, MPU_TYPE_StrongOrder, 0);
 
     /* Note: For code portability to other Arm processors or systems, Arm recommends that TCM regions are always defined as Normal, Non-shared memory in the MPU. */
     /* This is consistent with the default ARMv7E-M memory map attributes that apply when the MPU is either disabled or not implemented.*/
 
     /* ITCM for cortex M7 if no set it as zero */
     /* Size: import information from linker symbol, Type: Normal, Inner Cache Policy: None, Outer Cache Policy: None, Shareable: No, Privileged Access:RW, Unprivileged Access:RW */
-    MPU_REGION(__INT_ITCM_START, MPU_AP_FULLACCESS, MPU_SIZE_64KB, 0, 1, 0, 0, 0, 0);
+    MPU_REGION(__INT_ITCM_START, MPU_AP_FULLACCESS, MPU_SIZE_64KB, MPU_EXECUTE, MPU_TYPE_NoCache,
+               0);
 
 #if defined(S32K311) || defined(S32K341) || defined(S32M276) || defined(S32K310) || defined(S32M274)
     /* Size: import information from linker symbol, Type: Normal, Inner Cache Policy: Inner write-back, write and read allocate, Outer Cache Policy: Outer write-back. write and read allocate, Shareable: No, Privileged Access: Read-Only, Unprivileged Access: Read-Only */
-    MPU_REGION(__ROM_CODE_START, MPU_AP_READONLY_1, MPU_SIZE_1MB, 0, 1, 0, 1, 1, 0);
+    MPU_REGION(__ROM_CODE_START, MPU_AP_READONLY_1, MPU_SIZE_1MB, MPU_EXECUTE,
+               MPU_TYPE_WriteBackAlloc, 0);
 #elif defined(S32K342) || defined(S32K312) || defined(S32K322)
     /* Size: import information from linker symbol, Type: Normal, Inner Cache Policy: Inner write-back, write and read allocate, Outer Cache Policy: Outer write-back. write and read allocate, Shareable: No, Privileged Access: Read-Only, Unprivileged Access: Read-Only */
-    MPU_REGION(__ROM_CODE_START, MPU_AP_READONLY_1, MPU_SIZE_2MB, 0, 1, 0, 1, 1, 0);
+    MPU_REGION(__ROM_CODE_START, MPU_AP_READONLY_1, MPU_SIZE_2MB, MPU_EXECUTE,
+               MPU_TYPE_WriteBackAlloc, 0);
 #else
     /* Size: import information from linker symbol, Type: Normal, Inner Cache Policy: Inner write-back, write and read allocate, Outer Cache Policy: Outer write-back. write and read allocate, Shareable: No, Privileged Access: Read-Only, Unprivileged Access: Read-Only */
-    MPU_REGION(__ROM_CODE_START, MPU_AP_READONLY_1, MPU_SIZE_4MB, 0, 1, 0, 1, 1, 0);
+    MPU_REGION(__ROM_CODE_START, MPU_AP_READONLY_1, MPU_SIZE_4MB, MPU_EXECUTE,
+               MPU_TYPE_WriteBackAlloc, 0);
 #endif
 
     /*Data flash which would extract from linker symbol*/
     /* Size: import information from linker symbol, Type: Normal, Inner Cache Policy: Inner write-back, write and read allocate, Outer Cache Policy: Outer write-back. write and read allocate, Shareable: Yes, Privileged Access: Read-Only, Unprivileged Access: Read-Only */
-    MPU_REGION(__ROM_DATA_START, MPU_AP_READONLY_0, MPU_SIZE_256KB, 1, 1, 0, 1, 1, 0);
+    MPU_REGION(__ROM_DATA_START, MPU_AP_READONLY_0, MPU_SIZE_256KB, MPU_NO_EXECUTE,
+               MPU_TYPE_WriteBackAlloc, 0);
 
     /*UTEST*/
     /* Size: 8KB, Type: Normal, Inner Cache Policy: Inner write-back, write and read allocate, Outer Cache Policy: Outer write-back. write and read allocate, Shareable: Yes, Privileged Access: Read-Only, Unprivileged Access: Read-Only */
-    MPU_REGION(0x1B000000UL, MPU_AP_READONLY_0, MPU_SIZE_8KB, 1, 1, 0, 1, 1, 0);
+    MPU_REGION(0x1B000000UL, MPU_AP_READONLY_0, MPU_SIZE_8KB, MPU_NO_EXECUTE,
+               MPU_TYPE_WriteBackAlloc, 0);
 
     /*DTCM for cortex m7 if no set it as zero*/
     /* Size: import information from linker symbol, Type: Normal, Inner Cache Policy: None, Outer Cache Policy: None, Shareable: No, Privileged Access:RW, Unprivileged Access:RW */
-    MPU_REGION(__INT_DTCM_START, MPU_AP_FULLACCESS, MPU_SIZE_128KB, 0, 1, 0, 0, 0, 0);
+    MPU_REGION(__INT_DTCM_START, MPU_AP_FULLACCESS, MPU_SIZE_128KB, MPU_EXECUTE, MPU_TYPE_NoCache,
+               0);
 
     /*Ram unified section*/
     /* Limitation : TCM is not cacheable memory, the purpose is to expand the RAM size for low RAM derivatives. Used for cases like ccov testing,... */
 #if defined(EXTEND_LOWRAM_DERIVATIVES) &&                                                          \
     (defined(S32K310) || defined(S32K311) || defined(S32M274) || defined(S32M276))
     /* Size: import information from linker symbol, Type: Normal, Inner Cache Policy: Inner write-back, write and read allocate, Outer Cache Policy: Outer write-back, write and read allocate, Shareable: No, Privileged Access:RW, Unprivileged Access:RW */
-    MPU_REGION(__INT_DTCM_START, MPU_AP_FULLACCESS, (uint32)__RAM_CACHEABLE_SIZE - 1, 0, 1, 0, 1, 1,
-               0);
+    MPU_REGION(__INT_DTCM_START, MPU_AP_FULLACCESS, (uint32)__RAM_CACHEABLE_SIZE - 1, MPU_EXECUTE,
+               MPU_TYPE_WriteBackAlloc, 0);
 #elif defined(S32K396) || defined(S32K394) || defined(S32K344) || defined(S32K324) ||              \
     defined(S32K314) || defined(S32K374) || defined(S32K376)
     /* Size: import information from linker symbol, Type: Normal, Inner Cache Policy: Inner write-back, write and read allocate, Outer Cache Policy: Outer write-back, write and read allocate, Shareable: No, Privileged Access:RW, Unprivileged Access:RW */
     /* Disable subregion 7 & 8*/
-    MPU_REGION(__INT_SRAM_START, MPU_AP_FULLACCESS, (uint32)__RAM_CACHEABLE_SIZE - 1, 0, 1, 0, 1, 1,
-               BIT(7) | BIT(6));
+    MPU_REGION(__INT_SRAM_START, MPU_AP_FULLACCESS, (uint32)__RAM_CACHEABLE_SIZE - 1, MPU_EXECUTE,
+               MPU_TYPE_WriteBackAlloc, BIT(7) | BIT(6));
 #else
     /* Size: import information from linker symbol, Type: Normal, Inner Cache Policy: Inner write-back, write and read allocate, Outer Cache Policy: Outer write-back, write and read allocate, Shareable: No, Privileged Access:RW, Unprivileged Access:RW */
-    MPU_REGION(__INT_SRAM_START, MPU_AP_FULLACCESS, (uint32)__RAM_CACHEABLE_SIZE - 1, 0, 1, 0, 1, 1,
-               0);
+    MPU_REGION(__INT_SRAM_START, MPU_AP_FULLACCESS, (uint32)__RAM_CACHEABLE_SIZE - 1, MPU_EXECUTE,
+               MPU_TYPE_WriteBackAlloc, 0);
 #endif
 
 #if defined(EXTEND_LOWRAM_DERIVATIVES) &&                                                          \
     (defined(S32K310) || defined(S32K311) || defined(S32M274) || defined(S32M276))
     /*Ram non-cache section plus int result which is using for test report*/
     /* Size: import information from linker symbol, Type: Normal, Inner Cache Policy: None, Outer Cache Policy: None, Shareable: Yes, Privileged Access:RW, Unprivileged Access:RW */
-    MPU_REGION(__INT_SRAM_START, MPU_AP_FULLACCESS, (uint32)__RAM_NO_CACHEABLE_SIZE - 1, 1, 1, 1, 0,
-               0, 0);
+    MPU_REGION(__INT_SRAM_START, MPU_AP_FULLACCESS, (uint32)__RAM_NO_CACHEABLE_SIZE - 1,
+               MPU_NO_EXECUTE, MPU_TYPE_SharedNoCache, 0);
 #else
     /*Ram non-cache section plus int result which is using for test report*/
     /* Size: import information from linker symbol, Type: Normal, Inner Cache Policy: None, Outer Cache Policy: None, Shareable: Yes, Privileged Access:RW, Unprivileged Access:RW */
-    MPU_REGION(__RAM_NO_CACHEABLE_START, MPU_AP_FULLACCESS, (uint32)__RAM_NO_CACHEABLE_SIZE - 1, 1,
-               1, 1, 0, 0, 0);
+    MPU_REGION(__RAM_NO_CACHEABLE_START, MPU_AP_FULLACCESS, (uint32)__RAM_NO_CACHEABLE_SIZE - 1,
+               MPU_NO_EXECUTE, MPU_TYPE_SharedNoCache, 0);
 #endif
 
     /*Ram shareable section*/
     /* Size: import information from linker symbol, Type: Normal, Inner Cache Policy: None, Outer Cache Policy: None, Shareable: Yes, Privileged Access:RW, Unprivileged Access:RW */
-    MPU_REGION(__RAM_SHAREABLE_START, MPU_AP_FULLACCESS, (uint32)__RAM_SHAREABLE_SIZE - 1, 1, 1, 1,
-               0, 0, 0);
+    MPU_REGION(__RAM_SHAREABLE_START, MPU_AP_FULLACCESS, (uint32)__RAM_SHAREABLE_SIZE - 1,
+               MPU_NO_EXECUTE, MPU_TYPE_SharedNoCache, 0);
     /* Additional configuration for peripheral device*/
 
     /*AIPS_0, AIPS_1, AIPS_2*/
     /* Size: 6MB, Type: Strongly-ordered, Inner Cache Policy: None, Outer Cache Policy: None, Shareable: Yes, Privileged Access:RW, Unprivileged Access:RW */
-    /* Disable subregion 7 & 8*/
-    MPU_REGION(0x40000000UL, MPU_AP_FULLACCESS, MPU_SIZE_8MB, 1, 0, 1, 0, 0, BIT(7) | BIT(6));
+    /* Disable subregion 7 & 8, 8MB * 3/4 */
+    MPU_REGION(0x40000000UL, MPU_AP_FULLACCESS, MPU_SIZE_8MB, MPU_NO_EXECUTE, MPU_TYPE_StrongOrder,
+               BIT(7) | BIT(6));
 
-/*AIPS_3*/
+    /*AIPS_3*/
 #if defined(S32K396) || defined(S32K394) || defined(S32K374) || defined(S32K376)
     /* Size: 2MB, Type: Strongly-ordered, Inner Cache Policy: None, Outer Cache Policy: None, Shareable: Yes, Privileged Access:RW, Unprivileged Access:RW */
-    MPU_REGION(0x40600000UL, MPU_AP_FULLACCESS, MPU_SIZE_2MB, 1, 0, 1, 0, 0, 0);
+    MPU_REGION(0x40600000UL, MPU_AP_FULLACCESS, MPU_SIZE_2MB, MPU_NO_EXECUTE, MPU_TYPE_StrongOrder,
+               0);
 #endif /* S32K39x */
 
     /*QSPI Rx*/
     /* Size: 1KB, Type: Strongly-ordered, Inner Cache Policy: None, Outer Cache Policy: None, Shareable: Yes, Privileged Access:RW, Unprivileged Access:RW */
-    MPU_REGION(0x67000000UL, MPU_AP_FULLACCESS, MPU_SIZE_1KB, 1, 0, 1, 0, 0, 0);
+    MPU_REGION(0x67000000UL, MPU_AP_FULLACCESS, MPU_SIZE_1KB, MPU_NO_EXECUTE, MPU_TYPE_StrongOrder,
+               0);
 
     /*QSPI AHB*/
     /* Size: 128MB, Type: Normal, Inner Cache Policy: Inner write-back, write and read allocate, Outer Cache Policy: Outer write-back, write and read allocate, Shareable: No, Privileged Access:RW, Unprivileged Access:RW */
-    MPU_REGION(0x68000000UL, MPU_AP_FULLACCESS, MPU_SIZE_128MB, 0, 1, 0, 1, 1, 0);
+    MPU_REGION(0x68000000UL, MPU_AP_FULLACCESS, MPU_SIZE_128MB, MPU_EXECUTE,
+               MPU_TYPE_WriteBackAlloc, 0);
 
     /*Private Peripheral Bus*/
     /* Size: Normal, Type: Strongly-ordered, Inner Cache Policy: None, Outer Cache Policy: None, Shareable: Yes, Privileged Access:RW, Unprivileged Access:RW */
-    MPU_REGION(0xE0000000UL, MPU_AP_FULLACCESS, MPU_SIZE_1MB, 1, 0, 1, 0, 0, 0);
+    MPU_REGION(0xE0000000UL, MPU_AP_FULLACCESS, MPU_SIZE_1MB, MPU_NO_EXECUTE, MPU_TYPE_StrongOrder,
+               0);
 
     /* Program flash */
     /* Note: Do not merge with MPU region 2 because of alignment with the size */
 #if defined(S32K396) || defined(S32K376)
     /* Size: import information from linker symbol, Type: Normal, Inner Cache Policy: Inner write-back, write and read allocate, Outer Cache Policy: Outer write-back. write and read allocate, Shareable: No, Privileged Access: Read-Only, Unprivileged Access: Read-Only */
-    MPU_REGION(((uint32)__ROM_CODE_START + 0x400000UL), MPU_AP_READONLY_1, MPU_SIZE_2MB, 0, 1, 0, 1,
-               1, 0);
+    MPU_REGION(((uint32)__ROM_CODE_START + 0x400000UL), MPU_AP_READONLY_1, MPU_SIZE_2MB,
+               MPU_EXECUTE, MPU_TYPE_WriteBackAlloc, 0);
 #elif defined(S32K358) || defined(S32K388) || defined(S32K328) || defined(S32K338) ||              \
     defined(S32K348)
     /* Size: import information from linker symbol, Type: Normal, Inner Cache Policy: Inner write-back, write and read allocate, Outer Cache Policy: Outer write-back. write and read allocate, Shareable: No, Privileged Access: Read-Only, Unprivileged Access: Read-Only */
-    MPU_REGION(((uint32)__ROM_CODE_START + 0x400000UL), MPU_AP_READONLY_1, MPU_SIZE_2MB, 0, 1, 0, 1,
-               1, 0);
+    MPU_REGION(((uint32)__ROM_CODE_START + 0x400000UL), MPU_AP_READONLY_1, MPU_SIZE_4MB,
+               MPU_EXECUTE, MPU_TYPE_WriteBackAlloc, 0);
 #endif
 
     /*ACE region*/
 #if defined(S32K388)
     /* Size: 1KB, Type: Strongly-ordered, Inner Cache Policy: None, Outer Cache Policy: None, Shareable: Yes, Privileged Access:RW, Unprivileged Access:RW */
-    MPU_REGION(0x44000000UL, MPU_AP_FULLACCESS, MPU_SIZE_1KB, 1, 0, 1, 0, 0, 0);
+    MPU_REGION(0x44000000UL, MPU_AP_FULLACCESS, MPU_SIZE_1KB, MPU_NO_EXECUTE, MPU_TYPE_StrongOrder,
+               0);
 #endif
 
     /* Enable MPU, enables the MPU during the HardFault handler */
