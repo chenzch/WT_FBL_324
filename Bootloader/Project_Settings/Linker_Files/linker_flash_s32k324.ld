@@ -37,14 +37,14 @@
 * Last 176 KB of CODE_FLASH reserved by HSE Firmware
 * standby_data section should contain only uninitialized data
 */
-/* HEAP_SIZE  = DEFINED(__heap_size__)  ? __heap_size__  : 0x00002000; */
 __STANDBY_RAM_LIMIT_END  = 0x20407FFF;  /* 32Kbyte for standby ram */
 
 ENTRY(Reset_Handler)
 
 MEMORY
 {
-    int_pflash              : ORIGIN = 0x00400000, LENGTH = 0x003D4000    /* 4096KB - 176KB (sBAF + HSE)*/
+    int_pfblflash           : ORIGIN = 0x00400000, LENGTH = 0x00100000    /* 1024KB */
+    int_pappflash           : ORIGIN = 0x00500000, LENGTH = 0x002D4000    /* 3072KB - 176KB (sBAF + HSE)*/
     int_dflash              : ORIGIN = 0x10000000, LENGTH = 0x00020000    /* 128KB */
     int_itcm                : ORIGIN = 0x00000000, LENGTH = 0x00008000    /* 32KB */
     int_dtcm                : ORIGIN = 0x20000000, LENGTH = 0x0000F000    /* 60KB */
@@ -53,14 +53,15 @@ MEMORY
     int_sram_fls_rsv        : ORIGIN = 0x2042FF00, LENGTH = 0x00000100
     int_sram_no_cacheable   : ORIGIN = 0x20430000, LENGTH = 0x0000FF00    /* 64KB, needs to include int_sram_results  */
     int_sram_results        : ORIGIN = 0x2043FF00, LENGTH = 0x00000100
-    int_sram_shareable      : ORIGIN = 0x20440000, LENGTH = 0x00004000    /* 16KB */
-    ram_rsvd2               : ORIGIN = 0x20444000, LENGTH = 0             /* End of SRAM */
+    int_sram_shareable      : ORIGIN = 0x20440000, LENGTH = 0x00003FF0    /* 16KB - 16B */
+    ram_rsvd2               : ORIGIN = 0x20443FF0, LENGTH = 0x00000000    /* End of SRAM */
+    int_exchange            : ORIGIN = 0x20443FF0, LENGTH = 0x00000010    /* 16B, exchange area */
 }
 
 SECTIONS
 {
 
-    .pflash :
+    .pfblflash :
     {
         . = ALIGN(8);
         __text_start = .;
@@ -102,11 +103,16 @@ SECTIONS
         . = ALIGN(4);
         *(.mcal_const)
         . = ALIGN(8);
-    } > int_pflash
+    } > int_pfblflash
 
     . = ALIGN(8);
     __text_end = .;
     __sram_data_rom = __text_end;
+
+    .pappflash :
+    {
+        __applEntrance = .;
+    } > int_pappflash
 
     .dflash :
     {
@@ -285,7 +291,7 @@ SECTIONS
     __RAM_CACHEABLE_SIZE     = 0x12;  /* 256kbyte in power of 2 */
     __ROM_CACHEABLE_START    = __sram_data_rom;
     __ROM_CACHEABLE_END      = __sram_data_rom_end;
-    __ROM_CODE_START         = ORIGIN(int_pflash);
+    __ROM_CODE_START         = ORIGIN(int_pfblflash);
     __ROM_DATA_START         = ORIGIN(int_dflash);
 
     __BSS_SRAM_START         = __sram_bss_start;
@@ -315,6 +321,9 @@ SECTIONS
     __RAM_INIT               = 1;
     __ITCM_INIT              = 1;
     __DTCM_INIT              = 1;
+
+    __EXCHANGE_START         = ORIGIN(int_exchange);
+    __EXCHANGE_END           = ORIGIN(int_exchange) + LENGTH(int_exchange);
 
     Fls_ACEraseRomStart      = __acfls_code_rom_start;
     Fls_ACEraseRomEnd        = __acfls_code_rom_end;
@@ -346,6 +355,7 @@ SECTIONS
 
     __INDEX_COPY_CORE2       = 3;    /* This symbol is used to initialize data of ITCM/DTCM for CORE2 */
 
-    ASSERT(__standby_ram_end__ <= __STANDBY_RAM_LIMIT_END, "Memory for standby ram overflow")
+    ASSERT(__tcm_code_rom_end <= ORIGIN(int_pfblflash) + LENGTH(int_pfblflash), "Flash for code overflow")
 
+    ASSERT(__standby_ram_end__ <= __STANDBY_RAM_LIMIT_END, "Memory for standby ram overflow")
 }

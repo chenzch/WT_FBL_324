@@ -442,7 +442,7 @@ void SystemInit(void)
 #define BIT(X) ((1UL) << (uint32_t)(X))
 #define MPU_REGION(Addr, Access, Size, XN, TEX, S, C, B, SRD)                                      \
     do {                                                                                           \
-        DevAssert(0 == ((uint32_t)(Addr) & (BIT(Size) - 1)));                                                \
+        ASSERT(0 == ((uint32_t)(Addr) & (BIT(Size) - 1)));                                         \
         S32_MPU->RNR  = regionNum++;                                                               \
         S32_MPU->RBAR = (uint32)(Addr);                                                            \
         S32_MPU->RASR = S32_MPU_RASR_XN(XN) | S32_MPU_RASR_AP(Access) | S32_MPU_RASR_TEX(TEX) |    \

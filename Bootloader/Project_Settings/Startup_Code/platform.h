@@ -85,3 +85,11 @@
 #ifndef CM7_2_ENABLE
     #define CM7_2_ENABLE            (0)
 #endif
+
+#if defined(NDEBUG)
+#define ASSERT(X)
+#else
+#define ASSERT(X) DevAssert(X)
+#endif
+
+#define QWORDALIGH(X) ASSERT(0 == ((uint32_t)(X) & 7))
