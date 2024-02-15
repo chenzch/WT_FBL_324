@@ -67,9 +67,6 @@ int main(void);
 /*   functionality might not be supported. No code will be found in     */
 /*   case.                                                              */
 /************************************************************************/
-static void JudgeToApp(void)
-    __attribute__((naked, target("general-regs-only"), section(".startup")));
-
 void Reset_Handler(void) __attribute__((naked, __noreturn__, target("general-regs-only"), section(".startup")));
 void Reset_Handler(void) {
     /*****************************************************/
@@ -78,7 +75,52 @@ void Reset_Handler(void) {
     /* Disable System Interrupts */
     SuspendAllInterrupts();
 
-    JudgeToApp();
+    {
+        extern uint64_t __EXCHANGE_START[];
+        extern uint64_t __EXCHANGE_END[];
+        if (0 == (IP_MC_RGM->FES & MC_RGM_FES_SW_FUNC_MASK)) {
+            /* Not software reset, clear all data in exchange area */
+            uint64_t *pStart = __EXCHANGE_START;
+            uint64_t *pEnd   = __EXCHANGE_END;
+
+            QWORDALIGH(pStart);
+            QWORDALIGH(pEnd);
+
+            while (pStart < pEnd) {
+                *(pStart++) = 0ULL;
+            }
+        }
+
+        typedef union {
+            uint64_t raw[1];
+            struct {
+                bool RunFBL;
+            } data;
+        } ExchangeData;
+
+        if (!((ExchangeData *)__EXCHANGE_START)->data.RunFBL) {
+            /* Jump to __applEntrance */
+            extern uint32_t __applEntrance[];
+
+            uint32_t userSP    = __applEntrance[0];
+            uint32_t userEntry = __applEntrance[1];
+
+            if (userSP != -1UL) {
+
+                /* Relocate vector table */
+                S32_SCB->VTOR = (uint32_t)__applEntrance;
+
+                /* Set up stack pointer */
+                __asm("msr msp, %[inputSP] \t\n"
+                      "msr psp, %[inputSP] \t\n"
+                      :
+                      : [inputSP] "r"(userSP));
+
+                /* Jump to application PC (r1) */
+                __asm("mov pc, %[inputEntry] \t\n" : : [inputEntry] "r"(userEntry));
+            }
+        }
+    }
 
     /************************************************************************/
     /* Delay trap for debugger attachs before touching any peripherals      */
@@ -227,6 +269,20 @@ void Reset_Handler(void) {
             QWORDALIGH(pEnd);
             while (pStart < pEnd) {
                 *(pStart++) = 0ULL;
+            }
+        } else {
+            /* RAM_INIT skipped */
+            if (0 == (IP_MC_RGM->DES & MC_RGM_DES_F_POR_MASK)) {
+                /* POR clear standby_data */
+                extern uint64_t __standby_ram_begin__[];
+                extern uint64_t __standby_ram_end__[];
+                uint64_t       *pStart = __standby_ram_begin__;
+                uint64_t       *pEnd   = __standby_ram_end__;
+                QWORDALIGH(pStart);
+                QWORDALIGH(pEnd);
+                while (pStart < pEnd) {
+                    *(pStart++) = 0ULL;
+                }
             }
         }
     }
@@ -431,55 +487,6 @@ void Reset_Handler(void) {
     ResumeAllInterrupts();
     startup_go_to_user_mode();
     main();
-}
-
-void JudgeToApp(void) {
-    extern uint64_t __EXCHANGE_START[];
-    extern uint64_t __EXCHANGE_END[];
-    if (0 == (IP_MC_RGM->FES & MC_RGM_FES_SW_FUNC_MASK)) {
-        /* Not software reset, clear all data in exchange area */
-        uint64_t *pStart = __EXCHANGE_START;
-        uint64_t *pEnd   = __EXCHANGE_END;
-
-        QWORDALIGH(pStart);
-        QWORDALIGH(pEnd);
-
-        while (pStart < pEnd) {
-            *(pStart++) = 0ULL;
-        }
-    }
-
-    typedef struct {
-        bool RunFBL;
-    } ExchangeData;
-
-    if (((ExchangeData *)__EXCHANGE_START)->RunFBL) {
-        return;
-    }
-
-    /* Jump to __applEntrance */
-    {
-        extern uint32_t __applEntrance[];
-
-        uint32_t userSP    = __applEntrance[0];
-        uint32_t userEntry = __applEntrance[1];
-
-        if (userSP == 0xFFFFFFFF) {
-            return;
-        }
-
-        /* Relocate vector table */
-        S32_SCB->VTOR = (uint32_t)__applEntrance;
-
-        /* Set up stack pointer */
-        __asm("msr msp, %[inputSP] \t\n"
-              "msr psp, %[inputSP] \t\n"
-              :
-              : [inputSP] "r"(userSP));
-
-        /* Jump to application PC (r1) */
-        __asm("mov pc, %[inputEntry] \t\n" : : [inputEntry] "r"(userEntry));
-    }
 }
 
 /******************************************************************/

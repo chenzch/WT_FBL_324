@@ -436,20 +436,20 @@ void SystemInit(void)
      *  2  0 0 1 Reserved         Reserved                            Reserved
      ********************************************************************************************/
     enum {
-        MPU_TYPE_WriteThrough         = 0b0010,
-        MPU_TYPE_WriteBack            = 0b0011,
-        MPU_TYPE_StrongOrder          = 0b0100,
-        MPU_TYPE_SharedDevice         = 0b0101,
-        MPU_TYPE_SharedWriteThrough   = 0b0110,
-        MPU_TYPE_SharedWriteBack      = 0b0111,
-        MPU_TYPE_NoCache              = 0b1000,
-        MPU_TYPE_Reserved             = 0b1001,
-        MPU_TYPE_Undefined            = 0b1010,
-        MPU_TYPE_WriteBackAlloc       = 0b1011,
-        MPU_TYPE_SharedNoCache        = 0b1100,
-        MPU_TYPE_SharedWriteBackAlloc = 0b1111,
-        MPU_TYPE_Device               = 0b10000,
-        MPU_TYPE_Reserved1            = 0b10001,
+        MPU_TYPE_WriteThrough         = 2,  // 0b00010
+        MPU_TYPE_WriteBack            = 3,  // 0b00011
+        MPU_TYPE_StrongOrder          = 4,  // 0b00100
+        MPU_TYPE_SharedDevice         = 5,  // 0b00101
+        MPU_TYPE_SharedWriteThrough   = 6,  // 0b00110
+        MPU_TYPE_SharedWriteBack      = 7,  // 0b00111
+        MPU_TYPE_NoCache              = 8,  // 0b01000
+        MPU_TYPE_Reserved             = 9,  // 0b01001
+        MPU_TYPE_Undefined            = 10, // 0b01010
+        MPU_TYPE_WriteBackAlloc       = 11, // 0b01011
+        MPU_TYPE_SharedNoCache        = 12, // 0b01100
+        MPU_TYPE_SharedWriteBackAlloc = 15, // 0b01111
+        MPU_TYPE_Device               = 16, // 0b10000
+        MPU_TYPE_Reserved1            = 17, // 0b10001
     };
 
 #define BIT(X) ((1UL) << (uint32_t)(X))
