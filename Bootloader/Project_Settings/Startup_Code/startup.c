@@ -24,7 +24,7 @@
 *   @implements startup.c_Artifact
 */
 
-#include "Std_Types.h"
+#include "platform.h"
 
 /*******************************************************************************
  * Definitions

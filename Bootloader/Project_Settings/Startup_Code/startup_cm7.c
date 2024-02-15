@@ -228,10 +228,10 @@ void Reset_Handler(void) {
     }
 
     /* Initialize DTCM Stack ECC */
+    extern uint64_t __Stack_dtcm_end[];
+    extern uint64_t __Stack_dtcm_start[];
     {
         /* Fill 0xDEADBEEFCAFEFEED into stack ram from __Stack_dtcm_end to __Stack_dtcm_start */
-        extern uint64_t __Stack_dtcm_end[];
-        extern uint64_t __Stack_dtcm_start[];
 
         uint64_t *pStart = __Stack_dtcm_end;
         uint64_t *pEnd   = __Stack_dtcm_start;
@@ -290,7 +290,6 @@ void Reset_Handler(void) {
     /******************************************************************/
 
     /* set up stack; r13 SP*/
-    extern uint32_t __Stack_dtcm_start[];
     __asm (
 		"msr msp, %[inputSP] \t\n"
     	:
