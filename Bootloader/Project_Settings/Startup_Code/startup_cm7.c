@@ -227,6 +227,22 @@ void Reset_Handler(void) {
         }
     }
 
+    /* Initialize DTCM Stack ECC */
+    {
+        /* Fill 0xDEADBEEFCAFEFEED into stack ram from __Stack_dtcm_end to __Stack_dtcm_start */
+        extern uint64_t __Stack_dtcm_end[];
+        extern uint64_t __Stack_dtcm_start[];
+
+        uint64_t *pStart = __Stack_dtcm_end;
+        uint64_t *pEnd   = __Stack_dtcm_start;
+
+        DevAssert(0 == ((uint32_t)pStart & 7));
+        DevAssert(0 == ((uint32_t)pEnd & 7));
+        while (pStart < pEnd) {
+            *(pStart++) = 0xDEADBEEFCAFEFEEDULL;
+        }
+    }
+
     /* Initialize DTCM ECC */
     extern uint32_t __DTCM_INIT[];
     /* Skip if __DTCM_INIT is not set */

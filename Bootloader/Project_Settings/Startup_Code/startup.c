@@ -185,6 +185,9 @@ void init_data_bss(void) {
         ram    = copy_layout->ram_start;
         rom    = copy_layout->rom_start;
         romEnd = copy_layout->rom_end;
+        DevAssert(0 == ((uint32_t)ram & 7));
+        DevAssert(0 == ((uint32_t)rom & 7));
+        DevAssert(0 == ((uint32_t)romEnd & 7));
         while (rom < romEnd) {
             *(ram++) = *(rom++);
         }
@@ -196,6 +199,8 @@ void init_data_bss(void) {
     for (i = 0; i < len; ++i, ++zero_layout) {
         ram    = zero_layout->ram_start;
         romEnd = zero_layout->ram_end;
+        DevAssert(0 == ((uint32_t)ram & 7));
+        DevAssert(0 == ((uint32_t)romEnd & 7));
         while (ram < romEnd) {
             *(ram++) = 0;
         }
@@ -221,6 +226,9 @@ void init_data_bss_core2(void)
         ram    = copy_layout->ram_start;
         rom    = copy_layout->rom_start;
         romEnd = copy_layout->rom_end;
+        DevAssert(0 == ((uint32_t)ram & 7));
+        DevAssert(0 == ((uint32_t)rom & 7));
+        DevAssert(0 == ((uint32_t)romEnd & 7));
         while (rom < romEnd) {
             *(ram++) = *(rom++);
         }

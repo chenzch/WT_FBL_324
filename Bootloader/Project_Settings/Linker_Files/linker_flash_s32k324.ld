@@ -271,7 +271,7 @@ SECTIONS
     __INT_ITCM_END           = ORIGIN(int_itcm) + LENGTH(int_itcm);
 
     __INT_DTCM_START         = ORIGIN(int_dtcm);
-    __INT_DTCM_END           = ORIGIN(int_dtcm) + LENGTH(int_dtcm) + LENGTH(int_stack_dtcm);
+    __INT_DTCM_END           = ORIGIN(int_dtcm) + LENGTH(int_dtcm);
 
     __RAM_SHAREABLE_START    = __shareable_data_start__;
     __RAM_SHAREABLE_SIZE     = 0xE;  /* 16 kbyte in power of 2 */
