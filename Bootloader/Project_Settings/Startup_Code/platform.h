@@ -89,7 +89,13 @@
 #if defined(NDEBUG)
 #define ASSERT(X)
 #else
-#define ASSERT(X) DevAssert(X)
+#define ASSERT(X)                                                                                  \
+    do {                                                                                           \
+        if (X) {                                                                                   \
+        } else {                                                                                   \
+            __asm("BKPT #0");                                                                      \
+        }                                                                                          \
+    } while (0)
 #endif
 
 #define QWORDALIGH(X) ASSERT(0 == ((uint32_t)(X) & 7))

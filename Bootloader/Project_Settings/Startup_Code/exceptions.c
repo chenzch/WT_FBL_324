@@ -1,7 +1,7 @@
 /*==================================================================================================
 *   Project              : RTD AUTOSAR 4.7
 *   Platform             : CORTEXM
-*   Peripheral           : 
+*   Peripheral           :
 *   Dependencies         : none
 *
 *   Autosar Version      : 4.7.0
@@ -43,15 +43,15 @@ extern "C" {
 #define PLATFORM_START_SEC_CODE
 #include "Platform_MemMap.h"
 
-void NMI_Handler(void)                  __attribute__ ((weak));               /* NMI Handler */
-void HardFault_Handler(void)            __attribute__ ((weak));         /* Hard Fault Handler */
-void MemManage_Handler(void)            __attribute__ ((weak));         /* Reserved */
-void BusFault_Handler(void)             __attribute__ ((weak));          /* Bus Fault Handler */
-void UsageFault_Handler(void)           __attribute__ ((weak));        /* Usage Fault Handler */
-void DebugMon_Handler(void)             __attribute__ ((weak));          /* Debug Monitor Handler */
-void PendSV_Handler(void)               __attribute__ ((weak));            /* PendSV Handler */
-void SysTick_Handler(void)              __attribute__ ((weak));           /* SysTick Handler */
-void undefined_handler(void);         /* Undefined Handler */
+void NMI_Handler(void) __attribute__((weak));        /* NMI Handler */
+void HardFault_Handler(void) __attribute__((weak));  /* Hard Fault Handler */
+void MemManage_Handler(void) __attribute__((weak));  /* Reserved */
+void BusFault_Handler(void) __attribute__((weak));   /* Bus Fault Handler */
+void UsageFault_Handler(void) __attribute__((weak)); /* Usage Fault Handler */
+void DebugMon_Handler(void) __attribute__((weak));   /* Debug Monitor Handler */
+void PendSV_Handler(void) __attribute__((weak));     /* PendSV Handler */
+void SysTick_Handler(void) __attribute__((weak));    /* SysTick Handler */
+
 #ifdef MCAL_ENABLE_USER_MODE_SUPPORT
 void SVCHandler_main(uint32 * svc_args);
 void Suspend_Interrupts(void);
@@ -178,10 +178,6 @@ void SysTick_Handler(void)
 {
     while(TRUE){};
 }
-void undefined_handler(void)
-{
-   while(TRUE){};
-}
 
 #define PLATFORM_STOP_SEC_CODE
 #include "Platform_MemMap.h"
@@ -189,6 +185,3 @@ void undefined_handler(void)
 #ifdef __cplusplus
 }
 #endif
-
-
-

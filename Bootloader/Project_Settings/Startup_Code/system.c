@@ -59,30 +59,32 @@ extern "C" {
 *                                       LOCAL CONSTANTS
 ==================================================================================================*/
 
-extern  uint32 __INT_ITCM_START[];
-extern  uint32 __ROM_CODE_START[];
-extern  uint32 __ROM_DATA_START[];
-extern  uint32 __INT_DTCM_START[];
-extern  uint32 __INT_SRAM_START[];
-extern  uint32 __RAM_NO_CACHEABLE_START[];
-extern  uint32 __RAM_SHAREABLE_START[];
-extern  uint32 __RAM_CACHEABLE_SIZE[];
-extern  uint32 __RAM_NO_CACHEABLE_SIZE[];
-extern  uint32 __RAM_SHAREABLE_SIZE[];
+extern uint32 __INT_ITCM_START[];
+extern uint32 __ROM_CODE_START[];
+extern uint32 __ROM_DATA_START[];
+extern uint32 __INT_DTCM_START[];
+extern uint32 __INT_SRAM_START[];
+extern uint32 __RAM_NO_CACHEABLE_START[];
+extern uint32 __RAM_SHAREABLE_START[];
+extern uint32 __RAM_CACHEABLE_SIZE[];
+extern uint32 __RAM_NO_CACHEABLE_SIZE[];
+extern uint32 __RAM_SHAREABLE_SIZE[];
 /*==================================================================================================
 *                                       LOCAL MACROS
 ==================================================================================================*/
-#define CM7_0  (0UL)
-#define CM7_1  (1UL)
-#define CM7_2  (2UL)
-#define CM7_3  (3UL)
+#define CM7_0 (0UL)
+#define CM7_1 (1UL)
+#define CM7_2 (2UL)
+#define CM7_3 (3UL)
 
-#define SVC_GoToSupervisor()                        ASM_KEYWORD("svc 0x0")
-#define SVC_GoToUser()                              ASM_KEYWORD("svc 0x1")
+#define SVC_GoToSupervisor() ASM_KEYWORD("svc 0x0")
+#define SVC_GoToUser()       ASM_KEYWORD("svc 0x1")
 
-#define S32_SCB_CPACR_CPx_MASK(CpNum)               (0x3U << S32_SCB_CPACR_CPx_SHIFT(CpNum))
-#define S32_SCB_CPACR_CPx_SHIFT(CpNum)              (2U*((uint32)CpNum))
-#define S32_SCB_CPACR_CPx(CpNum, x)                 (((uint32)(((uint32)(x))<<S32_SCB_CPACR_CPx_SHIFT((CpNum))))&S32_SCB_CPACR_CPx_MASK((CpNum)))
+#define S32_SCB_CPACR_CPx_MASK(CpNum)  (0x3U << S32_SCB_CPACR_CPx_SHIFT(CpNum))
+#define S32_SCB_CPACR_CPx_SHIFT(CpNum) (2U * ((uint32)CpNum))
+#define S32_SCB_CPACR_CPx(CpNum, x)                                                                \
+    (((uint32)(((uint32)(x)) << S32_SCB_CPACR_CPx_SHIFT((CpNum)))) &                               \
+     S32_SCB_CPACR_CPx_MASK((CpNum)))
 
 /* MPU setting */
 #define CPU_MPU_MEMORY_COUNT (16U)
@@ -136,7 +138,6 @@ static INLINE void sys_m7_cache_disable(void);
  */
 static INLINE void sys_m7_cache_clean(void);
 
-
 #ifdef MCAL_ENABLE_USER_MODE_SUPPORT
 LOCAL_INLINE void Direct_GoToUser(void);
 #endif
@@ -144,8 +145,7 @@ LOCAL_INLINE void Direct_GoToUser(void);
 *                                       LOCAL FUNCTIONS
 ==================================================================================================*/
 #ifdef MCAL_ENABLE_USER_MODE_SUPPORT
-LOCAL_INLINE void Direct_GoToUser(void)
-{
+LOCAL_INLINE void Direct_GoToUser(void) {
     ASM_KEYWORD("push {r0}");
     ASM_KEYWORD("ldr r0, =0x1");
     ASM_KEYWORD("msr CONTROL, r0");
@@ -156,13 +156,11 @@ LOCAL_INLINE void Direct_GoToUser(void)
 *                                       GLOBAL FUNCTIONS
 ==================================================================================================*/
 #ifdef MCAL_ENABLE_USER_MODE_SUPPORT
-    extern uint32 startup_getControlRegisterValue(void);
-    extern uint32 startup_getAipsRegisterValue(void);
-    extern void Suspend_Interrupts(void);
-    extern void Resume_Interrupts(void);
+extern uint32 startup_getControlRegisterValue(void);
+extern uint32 startup_getAipsRegisterValue(void);
+extern void   Suspend_Interrupts(void);
+extern void   Resume_Interrupts(void);
 #endif /*MCAL_ENABLE_USER_MODE_SUPPORT*/
-
-
 
 /*================================================================================================*/
 /**
@@ -172,8 +170,7 @@ LOCAL_INLINE void Direct_GoToUser(void)
 */
 /*================================================================================================*/
 void startup_go_to_user_mode(void);
-void startup_go_to_user_mode(void)
-{
+void startup_go_to_user_mode(void) {
 #ifdef MCAL_ENABLE_USER_MODE_SUPPORT
     ASM_KEYWORD("svc 0x1");
 #endif
@@ -185,9 +182,8 @@ void startup_go_to_user_mode(void)
 * @details Infinite Loop
 */
 /*================================================================================================*/
-void default_interrupt_routine(void)
-{
-    while(TRUE){};
+void default_interrupt_routine(void) {
+    while (TRUE) {};
 }
 
 /*================================================================================================*/
@@ -200,8 +196,7 @@ void default_interrupt_routine(void)
 /*================================================================================================*/
 
 #ifdef MCAL_ENABLE_USER_MODE_SUPPORT
-uint32 Sys_GoToSupervisor(void)
-{
+uint32 Sys_GoToSupervisor(void) {
     uint32 u32ControlRegValue;
     uint32 u32AipsRegValue;
     uint32 u32SwitchToSupervisor;
@@ -212,12 +207,9 @@ uint32 Sys_GoToSupervisor(void)
     u32AipsRegValue = startup_getAipsRegisterValue();
 
     /* if core is already in supervisor mode for Thread mode, or running form Handler mode, there is no need to make the switch */
-    if((0U == (u32ControlRegValue & 1u)) || (0u < (u32AipsRegValue & 0xFFu)))
-    {
+    if ((0U == (u32ControlRegValue & 1u)) || (0u < (u32AipsRegValue & 0xFFu))) {
         u32SwitchToSupervisor = 0U;
-    }
-    else
-    {
+    } else {
         u32SwitchToSupervisor = 1U;
         SVC_GoToSupervisor();
     }
@@ -231,18 +223,15 @@ uint32 Sys_GoToSupervisor(void)
 * @details function used to switch back to user mode for Thread mode, return a uint32 value passed as parameter
 */
 /*================================================================================================*/
-uint32 Sys_GoToUser_Return(uint32 u32SwitchToSupervisor, uint32 u32returnValue)
-{
-    if (1UL == u32SwitchToSupervisor)
-    {
+uint32 Sys_GoToUser_Return(uint32 u32SwitchToSupervisor, uint32 u32returnValue) {
+    if (1UL == u32SwitchToSupervisor) {
         Direct_GoToUser();
     }
 
     return u32returnValue;
 }
 
-uint32 Sys_GoToUser(void)
-{
+uint32 Sys_GoToUser(void) {
     Direct_GoToUser();
     return 0UL;
 }
@@ -252,8 +241,7 @@ uint32 Sys_GoToUser(void)
 * @details Suspend Interrupts
 */
 /*================================================================================================*/
-void Sys_SuspendInterrupts(void)
-{
+void Sys_SuspendInterrupts(void) {
     uint32 u32ControlRegValue;
     uint32 u32AipsRegValue;
 
@@ -262,12 +250,9 @@ void Sys_SuspendInterrupts(void)
     /* if it's 0 the core is in Thread mode, otherwise in Handler mode */
     u32AipsRegValue = startup_getAipsRegisterValue();
 
-    if((0U == (u32ControlRegValue & 1u)) || (0u < (u32AipsRegValue & 0xFFu)))
-    {
+    if ((0U == (u32ControlRegValue & 1u)) || (0u < (u32AipsRegValue & 0xFFu))) {
         Suspend_Interrupts();
-    }
-    else
-    {
+    } else {
         ASM_KEYWORD(" svc 0x3");
     }
 }
@@ -277,8 +262,7 @@ void Sys_SuspendInterrupts(void)
 * @details Resume Interrupts
 */
 /*================================================================================================*/
-void Sys_ResumeInterrupts(void)
-{
+void Sys_ResumeInterrupts(void) {
     uint32 u32ControlRegValue;
     uint32 u32AipsRegValue;
 
@@ -287,12 +271,9 @@ void Sys_ResumeInterrupts(void)
     /* if it's 0 the core is in Thread mode, otherwise in Handler mode */
     u32AipsRegValue = startup_getAipsRegisterValue();
 
-    if((0U == (u32ControlRegValue & 1u)) || (0u < (u32AipsRegValue & 0xFFu)))
-    {
+    if ((0U == (u32ControlRegValue & 1u)) || (0u < (u32AipsRegValue & 0xFFu))) {
         Resume_Interrupts();
-    }
-    else
-    {
+    } else {
         ASM_KEYWORD(" svc 0x2");
     }
 }
@@ -304,8 +285,7 @@ void Sys_ResumeInterrupts(void)
 */
 /*================================================================================================*/
 #if !defined(USING_OS_AUTOSAROS)
-uint8 Sys_GetCoreID(void)
-{
+uint8 Sys_GetCoreID(void) {
     return (IP_MSCM->CPXNUM & MSCM_CPXNUM_CPN_MASK);
 }
 #endif
@@ -315,43 +295,39 @@ uint8 Sys_GetCoreID(void)
  * system initialization : system clock, interrupt router ...
  */
 
-
-void SystemInit(void)
-{
+void SystemInit(void) {
     uint32 i;
     uint32 coreMask = 0UL;
-    uint8 coreId = OsIf_GetCoreID();
+    uint8  coreId   = OsIf_GetCoreID();
 #ifdef MPU_ENABLE
     uint8 regionNum = 0U;
 #endif /* MPU_ENABLE */
-    switch(coreId)
-    {
-        case CM7_0:
-            coreMask = (1UL << MSCM_IRSPRC_M7_0_SHIFT);
-            break;
-        case CM7_1:
-#if defined (S32K324) || defined (S32K358) || defined(S32K328) || defined(S32K338) || defined(S32K348)
-            coreMask = (1UL << MSCM_IRSPRC_M7_1_SHIFT);
+    switch (coreId) {
+    case CM7_0:
+        coreMask = (1UL << MSCM_IRSPRC_M7_0_SHIFT);
+        break;
+    case CM7_1:
+#if defined(S32K324) || defined(S32K358) || defined(S32K328) || defined(S32K338) || defined(S32K348)
+        coreMask = (1UL << MSCM_IRSPRC_M7_1_SHIFT);
 #endif
-            break;
-        case CM7_2:
+        break;
+    case CM7_2:
 #if defined(S32K396) || defined(S32K394) || defined(S32K376) || defined(S32K374)
-            coreMask = (1UL << MSCM_IRSPRC_M7_2_SHIFT);
+        coreMask = (1UL << MSCM_IRSPRC_M7_2_SHIFT);
 #endif
-            break;
-        case CM7_3:
+        break;
+    case CM7_3:
 #ifdef S32K388
-            coreMask = (1UL << MSCM_IRSPRC_M7_3_SHIFT);
-            break;
+        coreMask = (1UL << MSCM_IRSPRC_M7_3_SHIFT);
+        break;
 #endif
-        default:
-            coreMask = 0UL;
-            break;
+    default:
+        coreMask = 0UL;
+        break;
     }
 
     /* Configure MSCM to enable/disable interrupts routing to Core processor */
-    for (i = 0; i < MSCM_IRSPRC_COUNT; i++)
-    {
+    for (i = 0; i < MSCM_IRSPRC_COUNT; i++) {
         IP_MSCM->IRSPRC[i] |= coreMask;
     }
 
@@ -624,90 +600,88 @@ void SystemInit(void)
     MCAL_INSTRUCTION_SYNC_BARRIER();
 
 #endif /* MPU_ENABLE */
-/**************************************************************************/
-            /* ENABLE CACHE */
+    /**************************************************************************/
+    /* ENABLE CACHE */
 /**************************************************************************/
 #if defined(D_CACHE_ENABLE) || defined(I_CACHE_ENABLE)
     sys_m7_cache_init();
 #endif /*defined(D_CACHE_ENABLE) || defined(I_CACHE_ENABLE)*/
 }
 
-
 /* Cache apis which are using for cache initilization, please make sure MPU is enable before calling these apis. Due to limitation of speculative access on cortex m7, MPU need to be initialized before enable cache. So if user specify -DDISABLE_MPUSTARTUP, cache will be disable in startup as well. If user want to enable cache again please call cache api after RM_init() or MPU_init() */
 
-static INLINE void sys_m7_cache_init(void)
-{
+static INLINE void sys_m7_cache_init(void) {
 #ifdef D_CACHE_ENABLE
     uint32 ccsidr = 0U;
-    uint32 sets = 0U;
-    uint32 ways = 0U;
-
+    uint32 sets   = 0U;
+    uint32 ways   = 0U;
 
     /*init Data caches*/
-    S32_SCB->CSSELR = 0U;                       /* select Level 1 data cache */
+    S32_SCB->CSSELR = 0U; /* select Level 1 data cache */
     MCAL_DATA_SYNC_BARRIER();
     ccsidr = S32_SCB->CCSIDR;
-    sets = (uint32)(CCSIDR_SETS(ccsidr));
+    sets   = (uint32)(CCSIDR_SETS(ccsidr));
     do {
-      ways = (uint32)(CCSIDR_WAYS(ccsidr));
-      do {
-        S32_SCB->DCISW = (((sets << SCB_DCISW_SET_SHIFT) & SCB_DCISW_SET_MASK) |
-                      ((ways << SCB_DCISW_WAY_SHIFT) & SCB_DCISW_WAY_MASK)  );
-        MCAL_DATA_SYNC_BARRIER();
-      } while (ways-- != 0U);
-    } while(sets-- != 0U);
+        ways = (uint32)(CCSIDR_WAYS(ccsidr));
+        do {
+            S32_SCB->DCISW = (((sets << SCB_DCISW_SET_SHIFT) & SCB_DCISW_SET_MASK) |
+                              ((ways << SCB_DCISW_WAY_SHIFT) & SCB_DCISW_WAY_MASK));
+            MCAL_DATA_SYNC_BARRIER();
+        } while (ways-- != 0U);
+    } while (sets-- != 0U);
     MCAL_DATA_SYNC_BARRIER();
-    S32_SCB->CCR |=  (uint32)SCB_CCR_DC_MASK;  /* enable D-Cache */
+    S32_SCB->CCR |= (uint32)SCB_CCR_DC_MASK; /* enable D-Cache */
     MCAL_DATA_SYNC_BARRIER();
-    MCAL_INSTRUCTION_SYNC_BARRIER();;
+    MCAL_INSTRUCTION_SYNC_BARRIER();
 #endif /*D_CACHE_ENABLE*/
 
 #ifdef I_CACHE_ENABLE
     /*init Code caches*/
     MCAL_DATA_SYNC_BARRIER();
-    MCAL_INSTRUCTION_SYNC_BARRIER();;
-    S32_SCB->ICIALLU = 0UL;                     /* invalidate I-Cache */
-    MCAL_DATA_SYNC_BARRIER();
-    MCAL_INSTRUCTION_SYNC_BARRIER();;
-    S32_SCB->CCR |=  (uint32)SCB_CCR_IC_MASK;  /* enable I-Cache */
-    MCAL_DATA_SYNC_BARRIER();
-    MCAL_INSTRUCTION_SYNC_BARRIER();;
-#endif /*I_CACHE_ENABLE*/
+    MCAL_INSTRUCTION_SYNC_BARRIER();
 
+    S32_SCB->ICIALLU = 0UL; /* invalidate I-Cache */
+
+    MCAL_DATA_SYNC_BARRIER();
+    MCAL_INSTRUCTION_SYNC_BARRIER();
+
+    S32_SCB->CCR |= (uint32)SCB_CCR_IC_MASK; /* enable I-Cache */
+
+    MCAL_DATA_SYNC_BARRIER();
+    MCAL_INSTRUCTION_SYNC_BARRIER();
+#endif /*I_CACHE_ENABLE*/
 }
 
-
-static INLINE void sys_m7_cache_disable(void)
-{
+static INLINE void sys_m7_cache_disable(void) {
     sys_m7_cache_clean();
     S32_SCB->CCR &= ~((uint32)1U << 17U);
+
     MCAL_DATA_SYNC_BARRIER();
-    MCAL_INSTRUCTION_SYNC_BARRIER();;
+    MCAL_INSTRUCTION_SYNC_BARRIER();
+
     S32_SCB->CCR &= ~((uint32)1U << 16U);
     MCAL_DATA_SYNC_BARRIER();
-    MCAL_INSTRUCTION_SYNC_BARRIER();;
+    MCAL_INSTRUCTION_SYNC_BARRIER();
 }
 
-
-static INLINE void sys_m7_cache_clean(void)
-{
+static INLINE void sys_m7_cache_clean(void) {
 #ifdef D_CACHE_ENABLE
     uint32 ccsidr = 0U;
-    uint32 sets = 0U;
-    uint32 ways = 0U;
+    uint32 sets   = 0U;
+    uint32 ways   = 0U;
 
-    S32_SCB->CSSELR = 0U;                       /* select Level 1 data cache */
+    S32_SCB->CSSELR = 0U; /* select Level 1 data cache */
     MCAL_DATA_SYNC_BARRIER();
     ccsidr = S32_SCB->CCSIDR;
-    sets = (uint32)(CCSIDR_SETS(ccsidr));
+    sets   = (uint32)(CCSIDR_SETS(ccsidr));
     do {
-      ways = (uint32)(CCSIDR_WAYS(ccsidr));
-      do {
-        S32_SCB->DCCISW = (((sets << 5) & (uint32)0x3FE0U) |
-                      ((ways << 30) & (uint32)0xC0000000U)  );
-        MCAL_DATA_SYNC_BARRIER();
-      } while (ways-- != 0U);
-    } while(sets-- != 0U);
+        ways = (uint32)(CCSIDR_WAYS(ccsidr));
+        do {
+            S32_SCB->DCCISW =
+                (((sets << 5) & (uint32)0x3FE0U) | ((ways << 30) & (uint32)0xC0000000U));
+            MCAL_DATA_SYNC_BARRIER();
+        } while (ways-- != 0U);
+    } while (sets-- != 0U);
 
     S32_SCB->CSSELR = (uint32)((S32_SCB->CSSELR) | 1U);
 #endif /*D_CACHE_ENABLE*/
@@ -716,19 +690,19 @@ static INLINE void sys_m7_cache_clean(void)
     S32_SCB->ICIALLU = 0UL;
 #endif /*I_CACHE_ENABLE*/
     MCAL_DATA_SYNC_BARRIER();
-    MCAL_INSTRUCTION_SYNC_BARRIER();;
+    MCAL_INSTRUCTION_SYNC_BARRIER();
+    ;
 }
 /**************************************************************************/
-                      /* FPU ENABLE*/
+/* FPU ENABLE*/
 /**************************************************************************/
-void Enable_FPU(void)
-{
+void Enable_FPU(void) {
 #ifdef ENABLE_FPU
     /* Enable CP10 and CP11 coprocessors */
     S32_SCB->CPACR |= (S32_SCB_CPACR_CPx(10U, 3U) | S32_SCB_CPACR_CPx(11U, 3U));
 
     MCAL_DATA_SYNC_BARRIER();
-    MCAL_INSTRUCTION_SYNC_BARRIER();;
+    MCAL_INSTRUCTION_SYNC_BARRIER();
 #endif /* ENABLE_FPU */
 }
 
