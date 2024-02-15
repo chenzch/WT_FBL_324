@@ -318,9 +318,9 @@ SECTIONS
     __ROM_DTCM_DATA_START    = __tcm_data_rom;
     __ROM_DTCM_END           = __tcm_data_rom_end;
 
-    __RAM_INIT               = 1;
-    __ITCM_INIT              = 1;
-    __DTCM_INIT              = 1;
+    __RAM_INIT               = 0;
+    __ITCM_INIT              = 0;
+    __DTCM_INIT              = 0;
 
     __EXCHANGE_START         = ORIGIN(int_exchange);
     __EXCHANGE_END           = ORIGIN(int_exchange) + LENGTH(int_exchange);
