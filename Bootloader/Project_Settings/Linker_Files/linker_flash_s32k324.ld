@@ -203,7 +203,7 @@ SECTIONS
     {
         . = ALIGN(4);
         KEEP(*(.int_results))
-        . += 0x100;
+        /* . += 0x100; */
     } > int_sram_results
 
     __shareable_data_rom = __non_cacheable_data_rom_end;

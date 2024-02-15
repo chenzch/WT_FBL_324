@@ -110,8 +110,6 @@ extern  uint32 __RAM_SHAREABLE_SIZE[];
       14  Program Flash 2   0x00800000                 PFLASH SIZE                            PFLASH SIZE  Normal            Write-Back/Allocate   Write-Back/Allocate   No           Yes           Read-Only            Read-Only
       15  ACE               0x44000000                 0x440003FF                                       1  Strongly-ordered  None                  None                  Yes          No            Read/Write           Read/Write
 */
-volatile   uint32 rbar[CPU_MPU_MEMORY_COUNT] = {0x0UL};
-volatile   uint32 rasr[CPU_MPU_MEMORY_COUNT] = {0x0UL};
 
 /*==================================================================================================
 *                                       LOCAL VARIABLES
@@ -348,7 +346,6 @@ void SystemInit(void)
     uint32 coreMask = 0UL;
     uint8 coreId = OsIf_GetCoreID();
 #ifdef MPU_ENABLE
-    uint8 index = 0U;
     uint8 regionNum = 0U;
 #endif /* MPU_ENABLE */
     switch(coreId)
@@ -381,156 +378,190 @@ void SystemInit(void)
     {
         IP_MSCM->IRSPRC[i] |= coreMask;
     }
-/**************************************************************************/
-                      /* MPU ENABLE*/
-/**************************************************************************/
+
+    /**************************************************************************/
+    /* MPU ENABLE                                                             */
+    /**************************************************************************/
 #ifdef MPU_ENABLE
-/**************************************************************************/
-                      /* DEFAULT MEMORY ENABLE*/
-/**************************************************************************/
-    /* Init MPU table for memory layout*/
-    /* Cover all memory on device as background set all memory as strong-order and no access*/
-    rbar[0]=0x00000000UL;
-    rasr[0]=0x1004003FUL;
-    /* Note: For code portability to other Arm processors or systems, Arm recommends that TCM regions are always defined as Normal, Non-shared memory in the MPU. */
-    /* This is consistent with the default ARMv7E-M memory map attributes that apply when the MPU is either disabled or not implemented.*/
+    /**************************************************************************/
+    /* DEFAULT MEMORY ENABLE*/
+    /**************************************************************************/
 
-    /* ITCM for cortex M7 if no set it as zero */
-    rbar[1]=(uint32)__INT_ITCM_START;
-    rasr[1]=0x0308001FUL; /* Size: import information from linker symbol, Type: Normal, Inner Cache Policy: None, Outer Cache Policy: None, Shareable: No, Privileged Access:RW, Unprivileged Access:RW */
-
-    rbar[2]=(uint32)__ROM_CODE_START;
-#if defined(S32K311) || defined(S32K341) || defined(S32M276) || defined(S32K310) || defined(S32M274)
-    rasr[2]=0x070B0027UL; /* Size: import information from linker symbol, Type: Normal, Inner Cache Policy: Inner write-back, write and read allocate, Outer Cache Policy: Outer write-back. write and read allocate, Shareable: No, Privileged Access: Read-Only, Unprivileged Access: Read-Only */
-#elif defined(S32K342) || defined(S32K312) || defined(S32K322)
-    rasr[2]=0x070B0029UL; /* Size: import information from linker symbol, Type: Normal, Inner Cache Policy: Inner write-back, write and read allocate, Outer Cache Policy: Outer write-back. write and read allocate, Shareable: No, Privileged Access: Read-Only, Unprivileged Access: Read-Only */
-#else
-    rasr[2]=0x070B002BUL; /* Size: import information from linker symbol, Type: Normal, Inner Cache Policy: Inner write-back, write and read allocate, Outer Cache Policy: Outer write-back. write and read allocate, Shareable: No, Privileged Access: Read-Only, Unprivileged Access: Read-Only */
-#endif
-
-    /*Data flash which would extract from linker symbol*/
-    rbar[3]=(uint32)__ROM_DATA_START;
-    rasr[3]=0x160B0023UL; /* Size: import information from linker symbol, Type: Normal, Inner Cache Policy: Inner write-back, write and read allocate, Outer Cache Policy: Outer write-back. write and read allocate, Shareable: Yes, Privileged Access: Read-Only, Unprivileged Access: Read-Only */
-
-    /*UTEST*/
-    rbar[4]=0x1B000000UL;
-    /* Size: 8KB, Type: Normal, Inner Cache Policy: Inner write-back, write and read allocate, Outer Cache Policy: Outer write-back. write and read allocate, Shareable: Yes, Privileged Access: Read-Only, Unprivileged Access: Read-Only */
-    rasr[4]=0x160B0019UL;
-
-    /*DTCM for cortex m7 if no set it as zero*/
-    rbar[5]=(uint32)__INT_DTCM_START;
-    rasr[5]=0x03080021UL; /* Size: import information from linker symbol, Type: Normal, Inner Cache Policy: None, Outer Cache Policy: None, Shareable: No, Privileged Access:RW, Unprivileged Access:RW */
-
-    /*Ram unified section*/
-#if defined(S32K396) || defined(S32K394) || defined(S32K344) || defined(S32K324) || defined(S32K314) || defined(S32K374)|| defined(S32K376)
-    rbar[6]=(uint32)__INT_SRAM_START;
-    /* Size: import information from linker symbol, Type: Normal, Inner Cache Policy: Inner write-back, write and read allocate, Outer Cache Policy: Outer write-back, write and read allocate, Shareable: No, Privileged Access:RW, Unprivileged Access:RW */
-    /* Disable subregion 7 & 8*/
-    rasr[6]=((uint32)0x030B0001UL)|(((uint32)__RAM_CACHEABLE_SIZE - 1) << 1)|(1<<15)|(1<<14);
-#else
-    rbar[6]=(uint32)__INT_SRAM_START;
-    /* Size: import information from linker symbol, Type: Normal, Inner Cache Policy: Inner write-back, write and read allocate, Outer Cache Policy: Outer write-back, write and read allocate, Shareable: No, Privileged Access:RW, Unprivileged Access:RW */
-    rasr[6]=((uint32)0x030B0001UL)|(((uint32)__RAM_CACHEABLE_SIZE - 1) << 1);
-#endif
-
-    /* Limitation : TCM is not cacheable memory, the purpose is to expand the RAM size for low RAM derivatives. Used for cases like ccov testing,... */
-#ifdef EXTEND_LOWRAM_DERIVATIVES
-    #if defined(S32K310) || defined(S32K311) || defined(S32M274) || defined(S32M276)
-    rbar[6]=(uint32)__INT_DTCM_START;
-    /* Size: import information from linker symbol, Type: Normal, Inner Cache Policy: Inner write-back, write and read allocate, Outer Cache Policy: Outer write-back, write and read allocate, Shareable: No, Privileged Access:RW, Unprivileged Access:RW */
-    rasr[6]=((uint32)0x030B0001UL)|(((uint32)__RAM_CACHEABLE_SIZE - 1) << 1);
-    #endif
-#endif
-
-    /*Ram non-cache section plus int result which is using for test report*/
-    rbar[7]=(uint32)__RAM_NO_CACHEABLE_START;
-    /* Size: import information from linker symbol, Type: Normal, Inner Cache Policy: None, Outer Cache Policy: None, Shareable: Yes, Privileged Access:RW, Unprivileged Access:RW */
-    rasr[7]= ((uint32)0x130C0001UL)|(((uint32)__RAM_NO_CACHEABLE_SIZE - 1) << 1);
-
-#ifdef EXTEND_LOWRAM_DERIVATIVES
-    #if defined(S32K310) || defined(S32K311) || defined(S32M274) || defined(S32M276)
-    /*Ram non-cache section plus int result which is using for test report*/
-    rbar[7]=(uint32)__INT_SRAM_START;
-    /* Size: import information from linker symbol, Type: Normal, Inner Cache Policy: None, Outer Cache Policy: None, Shareable: Yes, Privileged Access:RW, Unprivileged Access:RW */
-    rasr[7]= ((uint32)0x130C0001UL)|(((uint32)__RAM_NO_CACHEABLE_SIZE - 1) << 1);
-    #endif
-#endif
-
-    /*Ram shareable section*/
-    rbar[8]=(uint32)__RAM_SHAREABLE_START;
-    /* Size: import information from linker symbol, Type: Normal, Inner Cache Policy: None, Outer Cache Policy: None, Shareable: Yes, Privileged Access:RW, Unprivileged Access:RW */
-    rasr[8]=((uint32)0x130C0001UL)|(((uint32)__RAM_SHAREABLE_SIZE - 1) << 1);
-    /* Additional configuration for peripheral device*/
-
-    /*AIPS_0, AIPS_1, AIPS_2*/
-    rbar[9]=0x40000000UL;
-    /* Size: 6MB, Type: Strongly-ordered, Inner Cache Policy: None, Outer Cache Policy: None, Shareable: Yes, Privileged Access:RW, Unprivileged Access:RW */
-    /* Disable subregion 7 & 8*/
-    rasr[9]=((uint32)0x1304002DUL)|(1<<15)|(1<<14);
-
-    /*AIPS_3*/
-    rbar[10]=0x40600000UL;
-#if defined(S32K396) || defined(S32K394) || defined(S32K374) || defined(S32K376)
-    /* Size: 2MB, Type: Strongly-ordered, Inner Cache Policy: None, Outer Cache Policy: None, Shareable: Yes, Privileged Access:RW, Unprivileged Access:RW */
-    rasr[10]=0x13040029UL;
-#else
-    rasr[10]=0x0UL;
-#endif /* S32K39x */
-
-    /*QSPI Rx*/
-    rbar[11]=0x67000000UL;
-    /* Size: 128MB, Type: Strongly-ordered, Inner Cache Policy: None, Outer Cache Policy: None, Shareable: Yes, Privileged Access:RW, Unprivileged Access:RW */
-    rasr[11]=0x13040013UL;
-
-    /*QSPI AHB*/
-    rbar[12]=0x68000000UL;
-    /* Size: 128MB, Type: Normal, Inner Cache Policy: Inner write-back, write and read allocate, Outer Cache Policy: Outer write-back, write and read allocate, Shareable: No, Privileged Access:RW, Unprivileged Access:RW */
-    rasr[12]=0x030B0035UL;
-
-    /*Private Peripheral Bus*/
-    rbar[13]=0xE0000000UL;
-    /* Size: Normal, Type: Strongly-ordered, Inner Cache Policy: None, Outer Cache Policy: None, Shareable: Yes, Privileged Access:RW, Unprivileged Access:RW */
-    rasr[13]=0x13040027UL;
-
-    /* Program flash */
-    /* Note: Do not merge with MPU region 2 because of alignment with the size */
-    rbar[14]=(uint32)((uint32)__ROM_CODE_START + 0x400000UL);
-#if defined(S32K396) || defined(S32K376)
-    rasr[14]=0x070B0029UL; /* Size: import information from linker symbol, Type: Normal, Inner Cache Policy: Inner write-back, write and read allocate, Outer Cache Policy: Outer write-back. write and read allocate, Shareable: No, Privileged Access: Read-Only, Unprivileged Access: Read-Only */
-#elif defined(S32K358) || defined(S32K388) || defined(S32K328) || defined(S32K338) || defined(S32K348)
-    rasr[14]=0x070B002BUL; /* Size: import information from linker symbol, Type: Normal, Inner Cache Policy: Inner write-back, write and read allocate, Outer Cache Policy: Outer write-back. write and read allocate, Shareable: No, Privileged Access: Read-Only, Unprivileged Access: Read-Only */
-#else
-    rasr[14]=0UL;
-#endif
-    /*ACE region*/
-    rbar[15]=0x44000000UL;
-#if defined(S32K388)
-    /* Size: 1KB, Type: Strongly-ordered, Inner Cache Policy: None, Outer Cache Policy: None, Shareable: Yes, Privileged Access:RW, Unprivileged Access:RW */
-    rasr[15]=0x13040013UL;
-#else
-    rasr[15]=0UL;
-#endif
     MCAL_DATA_SYNC_BARRIER();
     MCAL_INSTRUCTION_SYNC_BARRIER();
 
     /*Checking if cache is enable before*/
-    if (((((uint32)1U << (uint32)17U) & S32_SCB->CCR) != (uint32)0) || ((((uint32)1U << (uint32)16U) & S32_SCB->CCR) != (uint32)0))
-    {
- /*synchronize cache before update mpu */
+    if (((((uint32)1U << (uint32)17U) & S32_SCB->CCR) != (uint32)0) ||
+        ((((uint32)1U << (uint32)16U) & S32_SCB->CCR) != (uint32)0)) {
+        /*synchronize cache before update mpu */
         sys_m7_cache_clean();
         sys_m7_cache_disable();
     }
-    /* Set default memory regions */
-    for (index = 0U; index < CPU_MPU_MEMORY_COUNT; index++)
-    {
-        if ((rasr[index]&(uint32)0x1) == (uint32)0x1)
-        {
-            S32_MPU->RNR  = regionNum;
-            S32_MPU->RBAR = rbar[index];
-            S32_MPU->RASR = rasr[index];
-            regionNum++;
-        }
-    }
+
+    enum {
+        MPU_AP_NOACCESS    = 0,
+        MPU_AP_RW_NOACCESS = 1,
+        MPU_AP_RW_RO       = 2,
+        MPU_AP_FULLACCESS  = 3,
+        MPU_AP_RESERVED    = 4,
+        MPU_AP_RO_NOACCESS = 5,
+        MPU_AP_READONLY_0  = 6,
+        MPU_AP_READONLY_1  = 7,
+    };
+
+    enum {
+        MPU_SIZE_32B   = 4,
+        MPU_SIZE_64B   = 5,
+        MPU_SIZE_128B  = 6,
+        MPU_SIZE_256B  = 7,
+        MPU_SIZE_512B  = 8,
+        MPU_SIZE_1KB   = 9,
+        MPU_SIZE_2KB   = 10,
+        MPU_SIZE_4KB   = 11,
+        MPU_SIZE_8KB   = 12,
+        MPU_SIZE_16KB  = 13,
+        MPU_SIZE_32KB  = 14,
+        MPU_SIZE_64KB  = 15,
+        MPU_SIZE_128KB = 16,
+        MPU_SIZE_256KB = 17,
+        MPU_SIZE_512KB = 18,
+        MPU_SIZE_1MB   = 19,
+        MPU_SIZE_2MB   = 20,
+        MPU_SIZE_4MB   = 21,
+        MPU_SIZE_8MB   = 22,
+        MPU_SIZE_16MB  = 23,
+        MPU_SIZE_32MB  = 24,
+        MPU_SIZE_64MB  = 25,
+        MPU_SIZE_128MB = 26,
+        MPU_SIZE_256MB = 27,
+        MPU_SIZE_512MB = 28,
+        MPU_SIZE_1GB   = 29,
+        MPU_SIZE_2GB   = 30,
+        MPU_SIZE_4GB   = 31,
+    };
+#define BIT(X) ((1UL) << (uint32_t)(X))
+#define MPU_REGION(Addr, Access, Size, XN, TEX, S, C, B, SRD)                                      \
+    do {                                                                                           \
+        DevAssert(0 == ((uint32_t)(Addr) & (BIT(Size) - 1)));                                                \
+        S32_MPU->RNR  = regionNum++;                                                               \
+        S32_MPU->RBAR = (uint32)(Addr);                                                            \
+        S32_MPU->RASR = S32_MPU_RASR_XN(XN) | S32_MPU_RASR_AP(Access) | S32_MPU_RASR_TEX(TEX) |    \
+                        S32_MPU_RASR_S(S) | S32_MPU_RASR_C(C) | S32_MPU_RASR_B(B) |                \
+                        S32_MPU_RASR_SRD(SRD) | S32_MPU_RASR_SIZE(Size) | S32_MPU_RASR_ENABLE(1);  \
+    } while (0)
+    /* Init MPU table for memory layout*/
+    /* Cover all memory on device as background set all memory as strong-order and no access*/
+    MPU_REGION(0, MPU_AP_NOACCESS, MPU_SIZE_4GB, 1, 0, 1, 0, 0, 0);
+
+    /* Note: For code portability to other Arm processors or systems, Arm recommends that TCM regions are always defined as Normal, Non-shared memory in the MPU. */
+    /* This is consistent with the default ARMv7E-M memory map attributes that apply when the MPU is either disabled or not implemented.*/
+
+    /* ITCM for cortex M7 if no set it as zero */
+    /* Size: import information from linker symbol, Type: Normal, Inner Cache Policy: None, Outer Cache Policy: None, Shareable: No, Privileged Access:RW, Unprivileged Access:RW */
+    MPU_REGION(__INT_ITCM_START, MPU_AP_FULLACCESS, MPU_SIZE_64KB, 0, 1, 0, 0, 0, 0);
+
+#if defined(S32K311) || defined(S32K341) || defined(S32M276) || defined(S32K310) || defined(S32M274)
+    /* Size: import information from linker symbol, Type: Normal, Inner Cache Policy: Inner write-back, write and read allocate, Outer Cache Policy: Outer write-back. write and read allocate, Shareable: No, Privileged Access: Read-Only, Unprivileged Access: Read-Only */
+    MPU_REGION(__ROM_CODE_START, MPU_AP_READONLY_1, MPU_SIZE_1MB, 0, 1, 0, 1, 1, 0);
+#elif defined(S32K342) || defined(S32K312) || defined(S32K322)
+    /* Size: import information from linker symbol, Type: Normal, Inner Cache Policy: Inner write-back, write and read allocate, Outer Cache Policy: Outer write-back. write and read allocate, Shareable: No, Privileged Access: Read-Only, Unprivileged Access: Read-Only */
+    MPU_REGION(__ROM_CODE_START, MPU_AP_READONLY_1, MPU_SIZE_2MB, 0, 1, 0, 1, 1, 0);
+#else
+    /* Size: import information from linker symbol, Type: Normal, Inner Cache Policy: Inner write-back, write and read allocate, Outer Cache Policy: Outer write-back. write and read allocate, Shareable: No, Privileged Access: Read-Only, Unprivileged Access: Read-Only */
+    MPU_REGION(__ROM_CODE_START, MPU_AP_READONLY_1, MPU_SIZE_4MB, 0, 1, 0, 1, 1, 0);
+#endif
+
+    /*Data flash which would extract from linker symbol*/
+    /* Size: import information from linker symbol, Type: Normal, Inner Cache Policy: Inner write-back, write and read allocate, Outer Cache Policy: Outer write-back. write and read allocate, Shareable: Yes, Privileged Access: Read-Only, Unprivileged Access: Read-Only */
+    MPU_REGION(__ROM_DATA_START, MPU_AP_READONLY_0, MPU_SIZE_256KB, 1, 1, 0, 1, 1, 0);
+
+    /*UTEST*/
+    /* Size: 8KB, Type: Normal, Inner Cache Policy: Inner write-back, write and read allocate, Outer Cache Policy: Outer write-back. write and read allocate, Shareable: Yes, Privileged Access: Read-Only, Unprivileged Access: Read-Only */
+    MPU_REGION(0x1B000000UL, MPU_AP_READONLY_0, MPU_SIZE_8KB, 1, 1, 0, 1, 1, 0);
+
+    /*DTCM for cortex m7 if no set it as zero*/
+    /* Size: import information from linker symbol, Type: Normal, Inner Cache Policy: None, Outer Cache Policy: None, Shareable: No, Privileged Access:RW, Unprivileged Access:RW */
+    MPU_REGION(__INT_DTCM_START, MPU_AP_FULLACCESS, MPU_SIZE_128KB, 0, 1, 0, 0, 0, 0);
+
+    /*Ram unified section*/
+    /* Limitation : TCM is not cacheable memory, the purpose is to expand the RAM size for low RAM derivatives. Used for cases like ccov testing,... */
+#if defined(EXTEND_LOWRAM_DERIVATIVES) &&                                                          \
+    (defined(S32K310) || defined(S32K311) || defined(S32M274) || defined(S32M276))
+    /* Size: import information from linker symbol, Type: Normal, Inner Cache Policy: Inner write-back, write and read allocate, Outer Cache Policy: Outer write-back, write and read allocate, Shareable: No, Privileged Access:RW, Unprivileged Access:RW */
+    MPU_REGION(__INT_DTCM_START, MPU_AP_FULLACCESS, (uint32)__RAM_CACHEABLE_SIZE - 1, 0, 1, 0, 1, 1,
+               0);
+#elif defined(S32K396) || defined(S32K394) || defined(S32K344) || defined(S32K324) ||              \
+    defined(S32K314) || defined(S32K374) || defined(S32K376)
+    /* Size: import information from linker symbol, Type: Normal, Inner Cache Policy: Inner write-back, write and read allocate, Outer Cache Policy: Outer write-back, write and read allocate, Shareable: No, Privileged Access:RW, Unprivileged Access:RW */
+    /* Disable subregion 7 & 8*/
+    MPU_REGION(__INT_SRAM_START, MPU_AP_FULLACCESS, (uint32)__RAM_CACHEABLE_SIZE - 1, 0, 1, 0, 1, 1,
+               BIT(7) | BIT(6));
+#else
+    /* Size: import information from linker symbol, Type: Normal, Inner Cache Policy: Inner write-back, write and read allocate, Outer Cache Policy: Outer write-back, write and read allocate, Shareable: No, Privileged Access:RW, Unprivileged Access:RW */
+    MPU_REGION(__INT_SRAM_START, MPU_AP_FULLACCESS, (uint32)__RAM_CACHEABLE_SIZE - 1, 0, 1, 0, 1, 1,
+               0);
+#endif
+
+#if defined(EXTEND_LOWRAM_DERIVATIVES) &&                                                          \
+    (defined(S32K310) || defined(S32K311) || defined(S32M274) || defined(S32M276))
+    /*Ram non-cache section plus int result which is using for test report*/
+    /* Size: import information from linker symbol, Type: Normal, Inner Cache Policy: None, Outer Cache Policy: None, Shareable: Yes, Privileged Access:RW, Unprivileged Access:RW */
+    MPU_REGION(__INT_SRAM_START, MPU_AP_FULLACCESS, (uint32)__RAM_NO_CACHEABLE_SIZE - 1, 1, 1, 1, 0,
+               0, 0);
+#else
+    /*Ram non-cache section plus int result which is using for test report*/
+    /* Size: import information from linker symbol, Type: Normal, Inner Cache Policy: None, Outer Cache Policy: None, Shareable: Yes, Privileged Access:RW, Unprivileged Access:RW */
+    MPU_REGION(__RAM_NO_CACHEABLE_START, MPU_AP_FULLACCESS, (uint32)__RAM_NO_CACHEABLE_SIZE - 1, 1,
+               1, 1, 0, 0, 0);
+#endif
+
+    /*Ram shareable section*/
+    /* Size: import information from linker symbol, Type: Normal, Inner Cache Policy: None, Outer Cache Policy: None, Shareable: Yes, Privileged Access:RW, Unprivileged Access:RW */
+    MPU_REGION(__RAM_SHAREABLE_START, MPU_AP_FULLACCESS, (uint32)__RAM_SHAREABLE_SIZE - 1, 1, 1, 1,
+               0, 0, 0);
+    /* Additional configuration for peripheral device*/
+
+    /*AIPS_0, AIPS_1, AIPS_2*/
+    /* Size: 6MB, Type: Strongly-ordered, Inner Cache Policy: None, Outer Cache Policy: None, Shareable: Yes, Privileged Access:RW, Unprivileged Access:RW */
+    /* Disable subregion 7 & 8*/
+    MPU_REGION(0x40000000UL, MPU_AP_FULLACCESS, MPU_SIZE_8MB, 1, 0, 1, 0, 0, BIT(7) | BIT(6));
+
+/*AIPS_3*/
+#if defined(S32K396) || defined(S32K394) || defined(S32K374) || defined(S32K376)
+    /* Size: 2MB, Type: Strongly-ordered, Inner Cache Policy: None, Outer Cache Policy: None, Shareable: Yes, Privileged Access:RW, Unprivileged Access:RW */
+    MPU_REGION(0x40600000UL, MPU_AP_FULLACCESS, MPU_SIZE_2MB, 1, 0, 1, 0, 0, 0);
+#endif /* S32K39x */
+
+    /*QSPI Rx*/
+    /* Size: 1KB, Type: Strongly-ordered, Inner Cache Policy: None, Outer Cache Policy: None, Shareable: Yes, Privileged Access:RW, Unprivileged Access:RW */
+    MPU_REGION(0x67000000UL, MPU_AP_FULLACCESS, MPU_SIZE_1KB, 1, 0, 1, 0, 0, 0);
+
+    /*QSPI AHB*/
+    /* Size: 128MB, Type: Normal, Inner Cache Policy: Inner write-back, write and read allocate, Outer Cache Policy: Outer write-back, write and read allocate, Shareable: No, Privileged Access:RW, Unprivileged Access:RW */
+    MPU_REGION(0x68000000UL, MPU_AP_FULLACCESS, MPU_SIZE_128MB, 0, 1, 0, 1, 1, 0);
+
+    /*Private Peripheral Bus*/
+    /* Size: Normal, Type: Strongly-ordered, Inner Cache Policy: None, Outer Cache Policy: None, Shareable: Yes, Privileged Access:RW, Unprivileged Access:RW */
+    MPU_REGION(0xE0000000UL, MPU_AP_FULLACCESS, MPU_SIZE_1MB, 1, 0, 1, 0, 0, 0);
+
+    /* Program flash */
+    /* Note: Do not merge with MPU region 2 because of alignment with the size */
+#if defined(S32K396) || defined(S32K376)
+    /* Size: import information from linker symbol, Type: Normal, Inner Cache Policy: Inner write-back, write and read allocate, Outer Cache Policy: Outer write-back. write and read allocate, Shareable: No, Privileged Access: Read-Only, Unprivileged Access: Read-Only */
+    MPU_REGION(((uint32)__ROM_CODE_START + 0x400000UL), MPU_AP_READONLY_1, MPU_SIZE_2MB, 0, 1, 0, 1,
+               1, 0);
+#elif defined(S32K358) || defined(S32K388) || defined(S32K328) || defined(S32K338) ||              \
+    defined(S32K348)
+    /* Size: import information from linker symbol, Type: Normal, Inner Cache Policy: Inner write-back, write and read allocate, Outer Cache Policy: Outer write-back. write and read allocate, Shareable: No, Privileged Access: Read-Only, Unprivileged Access: Read-Only */
+    MPU_REGION(((uint32)__ROM_CODE_START + 0x400000UL), MPU_AP_READONLY_1, MPU_SIZE_2MB, 0, 1, 0, 1,
+               1, 0);
+#endif
+
+    /*ACE region*/
+#if defined(S32K388)
+    /* Size: 1KB, Type: Strongly-ordered, Inner Cache Policy: None, Outer Cache Policy: None, Shareable: Yes, Privileged Access:RW, Unprivileged Access:RW */
+    MPU_REGION(0x44000000UL, MPU_AP_FULLACCESS, MPU_SIZE_1KB, 1, 0, 1, 0, 0, 0);
+#endif
 
     /* Enable MPU, enables the MPU during the HardFault handler */
     S32_MPU->CTRL |= (S32_MPU_CTRL_ENABLE_MASK | S32_MPU_CTRL_HFNMIENA_MASK);
