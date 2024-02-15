@@ -40,83 +40,8 @@ void _core_loop(void) {
 }
 #endif
 
-extern const uint32_t __RAM_CACHEABLE_START[];
-extern const uint32_t __ROM_CACHEABLE_START[];
-extern const uint32_t __ROM_CACHEABLE_END[];
-extern const uint32_t __RAM_NO_CACHEABLE_START[];
-extern const uint32_t __ROM_NO_CACHEABLE_START[];
-extern const uint32_t __ROM_NO_CACHEABLE_END[];
-extern const uint32_t __RAM_SHAREABLE_START[];
-extern const uint32_t __ROM_SHAREABLE_START[];
-extern const uint32_t __ROM_SHAREABLE_END[];
 extern const uint32_t __RAM_INTERRUPT_START[];
 extern const uint32_t __INIT_INTERRUPT_START[];
-extern const uint32_t __INIT_INTERRUPT_END[];
-extern const uint32_t __RAM_ITCM_START[];
-extern const uint32_t __ROM_ITCM_START[];
-extern const uint32_t __ROM_ITCM_END[];
-extern const uint32_t __RAM_DTCM_DATA_START[];
-extern const uint32_t __ROM_DTCM_DATA_START[];
-extern const uint32_t __ROM_DTCM_END[];
-
-const uint32_t init_table_size __attribute__((section(".init_table"))) = 6;
-
-const uint32_t *const init_table[6][3] __attribute__((section(".init_table"))) = {
-    {
-        __RAM_CACHEABLE_START,
-        __ROM_CACHEABLE_START,
-        __ROM_CACHEABLE_END,
-    },
-    {
-        __RAM_NO_CACHEABLE_START,
-        __ROM_NO_CACHEABLE_START,
-        __ROM_NO_CACHEABLE_END,
-    },
-    {
-        __RAM_SHAREABLE_START,
-        __ROM_SHAREABLE_START,
-        __ROM_SHAREABLE_END,
-    },
-    {
-        __RAM_INTERRUPT_START,
-        __INIT_INTERRUPT_START,
-        __INIT_INTERRUPT_END,
-    },
-    {
-        __RAM_ITCM_START,
-        __ROM_ITCM_START,
-        __ROM_ITCM_END,
-    },
-    {
-        __RAM_DTCM_DATA_START,
-        __ROM_DTCM_DATA_START,
-        __ROM_DTCM_END,
-    },
-};
-
-extern const uint32_t __BSS_SRAM_SH_START[];
-extern const uint32_t __BSS_SRAM_SH_END[];
-extern const uint32_t __BSS_SRAM_NC_START[];
-extern const uint32_t __BSS_SRAM_NC_END[];
-extern const uint32_t __BSS_SRAM_START[];
-extern const uint32_t __BSS_SRAM_END[];
-
-const uint32_t zero_table_size __attribute__((section(".zero_table"))) = 3;
-
-const uint32_t *const zero_table[3][2] __attribute__((section(".zero_table"))) = {
-    {
-        __BSS_SRAM_SH_START,
-        __BSS_SRAM_SH_END,
-    },
-    {
-        __BSS_SRAM_NC_START,
-        __BSS_SRAM_NC_END,
-    },
-    {
-        __BSS_SRAM_START,
-        __BSS_SRAM_END,
-    },
-};
 
 void init_data_bss(void);
 void init_data_bss_core2(void);

@@ -62,10 +62,11 @@ SECTIONS
 
     .pflash :
     {
+        . = ALIGN(8);
         __text_start = .;
         __interrupts_init_start = .;
         KEEP(*(.intc_vector))
-        . = ALIGN(4);
+        . = ALIGN(8);
         __interrupts_init_end = .;
         KEEP(*(.core_loop))
         . = ALIGN(4);
@@ -81,14 +82,14 @@ SECTIONS
         *(.mcal_text)
         . = ALIGN(4);
         *(.acmcu_code_rom)
-        . = ALIGN(4);
+        . = ALIGN(8);
         __acfls_code_rom_start = .;
         *(.acfls_code_rom)
-        . = ALIGN(4);
+        . = ALIGN(8);
         __acfls_code_rom_end = .;
         __acmem_43_infls_code_rom_start = .;
         *(.acmem_43_infls_code_rom)
-        . = ALIGN(4);
+        . = ALIGN(8);
         __acmem_43_infls_code_rom_end = .;
         KEEP(*(.init))
         . = ALIGN(4);
@@ -100,15 +101,10 @@ SECTIONS
         *(.mcal_const_cfg)
         . = ALIGN(4);
         *(.mcal_const)
-        . = ALIGN(4);
-        __init_table = .;
-        KEEP(*(.init_table))
-        . = ALIGN(4);
-        __zero_table = .;
-        KEEP(*(.zero_table))
+        . = ALIGN(8);
     } > int_pflash
 
-    . = ALIGN(4);
+    . = ALIGN(8);
     __text_end = .;
     __sram_data_rom = __text_end;
 
@@ -137,7 +133,7 @@ SECTIONS
 
     .sram_data : AT(__sram_data_rom)
     {
-        . = ALIGN(4);
+        . = ALIGN(8);
         __sram_data_begin__ = .;
         . = ALIGN(4);
         *(.ramcode)
@@ -146,30 +142,22 @@ SECTIONS
         *(.data*)
         . = ALIGN(4);
         *(.mcal_data)
-        . = ALIGN(4);
+        . = ALIGN(8);
         __sram_data_end__ = .;
     } > int_sram
 
     __sram_data_rom_end = __sram_data_rom + (__sram_data_end__ - __sram_data_begin__);
 
-    /* heap section */
-    /*.heap (NOLOAD):
-    {
-        . += ALIGN(4);
-        _end = .;
-        end = .;
-        _heap_start = .;
-        . += HEAP_SIZE;
-        _heap_end = .;
-    } > int_sram */
-
     .acfls_code_ram :
     {
+        . = ALIGN(8);
         __acfls_code_ram_start  = .;
         *(.acfls_code_ram)
+        . = ALIGN(8);
         __acfls_code_ram_end   = .;
         __acmem_43_infls_code_ram_start = .;
         *(.acmem_43_infls_code_ram)
+        . = ALIGN(8);
         __acmem_43_infls_code_ram_end = .;
     } > int_sram_fls_rsv
 
@@ -177,7 +165,7 @@ SECTIONS
 
     .non_cacheable_data : AT(__non_cacheable_data_rom)
     {
-        . = ALIGN(4);
+        . = ALIGN(8);
         __non_cacheable_data_start__ = .;
         *(.mcal_data_no_cacheable)
         . = ALIGN(4);
@@ -185,6 +173,7 @@ SECTIONS
         . = ALIGN(4);
         HSE_LOOP_ADDR = .;
         /* LONG(0x0); */
+        . = ALIGN(8);
         __non_cacheable_data_end__ = .;
     } > int_sram_no_cacheable
 
@@ -210,10 +199,10 @@ SECTIONS
 
     .shareable_data : AT(__shareable_data_rom)
     {
-        . = ALIGN(4);
+        . = ALIGN(8);
         __shareable_data_start__ = .;
         KEEP(*(.mcal_shared_data))
-        . = ALIGN(4);
+        . = ALIGN(8);
         __shareable_data_end__ = .;
     } > int_sram_shareable
 
@@ -224,7 +213,7 @@ SECTIONS
         . = ALIGN(2048);
         __interrupts_ram_start = .;
         . += __interrupts_init_end - __interrupts_init_start;
-        . = ALIGN(4);
+        . = ALIGN(8);
         __interrupts_ram_end = .;
     } > int_dtcm
 
@@ -232,10 +221,10 @@ SECTIONS
 
     .data_tcm_data : AT(__tcm_data_rom)
     {
-        . = ALIGN(4);
+        . = ALIGN(8);
         __dtcm_data_start__ = .;
         *(.dtcm_data*)
-        . = ALIGN(4);
+        . = ALIGN(8);
         __dtcm_data_end__ = .;
     } > int_dtcm
 
@@ -243,10 +232,10 @@ SECTIONS
 
     .bss_tcm_data (NOLOAD) :
     {
-        . = ALIGN(4);
+        . = ALIGN(8);
         __dtcm_bss_start__ = .;
         *(.dtcm_bss*)
-        . = ALIGN(4);
+        . = ALIGN(8);
         __dtcm_bss_end__ = .;
     } > int_dtcm
 
@@ -254,10 +243,10 @@ SECTIONS
 
    .itcm_text : AT(__tcm_code_rom_start)
     {
-        . = ALIGN(4);
+        . = ALIGN(8);
         __itcm_start__ = .;
         *(.itcm_text*)
-        . = ALIGN(4);
+        . = ALIGN(8);
         __itcm_end__ = .;
     } > int_itcm
 
@@ -323,31 +312,28 @@ SECTIONS
     __ROM_DTCM_DATA_START    = __tcm_data_rom;
     __ROM_DTCM_END           = __tcm_data_rom_end;
 
-    __INIT_TABLE             = __init_table;
-    __ZERO_TABLE             = __zero_table;
-
     __RAM_INIT               = 1;
     __ITCM_INIT              = 1;
     __DTCM_INIT              = 1;
 
     Fls_ACEraseRomStart      = __acfls_code_rom_start;
     Fls_ACEraseRomEnd        = __acfls_code_rom_end;
-    Fls_ACEraseSize          = (__acfls_code_rom_end - __acfls_code_rom_start) / 4; /* Copy 4 bytes at a time*/
+    Fls_ACEraseSize          = (__acfls_code_rom_end - __acfls_code_rom_start) / 8; /* Copy 8 bytes at a time*/
 
     Fls_ACWriteRomStart      = __acfls_code_rom_start;
     Fls_ACWriteRomEnd        = __acfls_code_rom_end;
-    Fls_ACWriteSize          = (__acfls_code_rom_end - __acfls_code_rom_start) / 4; /* Copy 4 bytes at a time*/
+    Fls_ACWriteSize          = (__acfls_code_rom_end - __acfls_code_rom_start) / 8; /* Copy 8 bytes at a time*/
 
     _ERASE_FUNC_ADDRESS_     = __acfls_code_ram_start;
     _WRITE_FUNC_ADDRESS_     = __acfls_code_ram_start;
 
     Mem_43_INFLS_ACEraseRomStart         = __acmem_43_infls_code_rom_start;
     Mem_43_INFLS_ACEraseRomEnd           = __acmem_43_infls_code_rom_end;
-    Mem_43_INFLS_ACEraseSize             = ((__acmem_43_infls_code_rom_end - __acmem_43_infls_code_rom_start)+3) / 4; /* Copy 4 bytes at a time*/
+    Mem_43_INFLS_ACEraseSize             = (__acmem_43_infls_code_rom_end - __acmem_43_infls_code_rom_start) / 8; /* Copy 8 bytes at a time*/
 
     Mem_43_INFLS_ACWriteRomStart         = __acmem_43_infls_code_rom_start;
     Mem_43_INFLS_ACWriteRomEnd           = __acmem_43_infls_code_rom_end;
-    Mem_43_INFLS_ACWriteSize             = ((__acmem_43_infls_code_rom_end - __acmem_43_infls_code_rom_start)+3) / 4; /* Copy 4 bytes at a time*/
+    Mem_43_INFLS_ACWriteSize             = (__acmem_43_infls_code_rom_end - __acmem_43_infls_code_rom_start) / 8; /* Copy 8 bytes at a time*/
 
     _MEM_43_INFLS_ERASE_FUNC_ADDRESS_    = __acmem_43_infls_code_ram_start;
     _MEM_43_INFLS_WRITE_FUNC_ADDRESS_    = __acmem_43_infls_code_ram_start;
