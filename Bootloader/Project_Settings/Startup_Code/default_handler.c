@@ -36,6 +36,7 @@ void Default_Handler(void) {
     switch (CurrentInterrupt) {
 
     default:
+        BREAKPOINT();
         for (;;)
             ;
     }
