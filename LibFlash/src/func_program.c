@@ -19,6 +19,6 @@
 //---------------------------------------------------------------------------------------------------------------------
 #include "platform.h"
 
-void Flash_Init(void) {
-	for(;;);
+boolean Flash_Program(uint32_t Start, uint32_t Size, uint32_t *Data) {
+	return SUCCESS;
 }

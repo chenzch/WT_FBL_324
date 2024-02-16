@@ -62,6 +62,7 @@ SECTIONS
   .text :
   {
     . = ALIGN(8);
+    __start_of_itcm = .;
     KEEP(*(.vectors))
     *(.text*)
 
@@ -96,6 +97,8 @@ SECTIONS
   .ARM.exidx :
   {
     *(.ARM.exidx* .gnu.linkonce.armexidx.*)
+    . = ALIGN(8);
+    __end_of_itcm = .;
   } > ITCM
   __exidx_end = .;
 
@@ -105,6 +108,7 @@ SECTIONS
     . = ALIGN(8);
     __etext = .;
     __data_start__ = .;
+    __start_of_dtcm = .;
     *(vtable)
     *(.data)
     *(.data.*)
@@ -123,8 +127,12 @@ SECTIONS
     *(COMMON)
     . = ALIGN(8);
     __bss_end__ = .;
+    __end_of_dtcm = .;
   } > DTCM
 
   PROVIDE(__stack = __StackTop);
+  
+  __size_of_itcm = __end_of_itcm - __start_of_itcm;
+  __size_of_dtcm = __end_of_dtcm - __start_of_dtcm;
 
 }

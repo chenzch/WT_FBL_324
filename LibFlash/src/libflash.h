@@ -25,7 +25,13 @@ extern "C" {
 #endif
 
 typedef struct {
-    void(*Init)(void);
+    uint64_t *ITCM_Pos;
+    uint32_t  ITCM_Size;
+    uint64_t *DTCM_Pos;
+    uint32_t  DTCM_Size;
+    boolean (*Unlock)(uint32_t Start, uint32_t Size);
+    boolean (*Erase)(uint32_t Start, uint32_t Size);
+    boolean (*Program)(uint32_t Start, uint32_t Size, uint32_t *Data);
 } IfFlash;
 
 #if defined(__cplusplus)

@@ -5,6 +5,9 @@
 		},
 		{
 			"path": "Application"
+		},
+		{
+			"path": "LibFlash"
 		}
 	],
 	"settings": {}
