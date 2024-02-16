@@ -54,7 +54,9 @@ local.properties
 #.project
 
 Debug_FLASH/
+Debug_RAM/
 Release_FLASH/
+Release_RAM/
 Clock*.txt
 # Prerequisites
 *.d
