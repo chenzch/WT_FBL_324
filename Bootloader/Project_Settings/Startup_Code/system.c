@@ -44,7 +44,6 @@ extern "C" {
 ==================================================================================================*/
 #include "platform.h"
 #include "Mcal.h"
-#include "system.h"
 #include "core_specific.h"
 
 /*==================================================================================================
@@ -80,6 +79,21 @@ extern uint32 __RAM_SHAREABLE_SIZE[];
 #define SVC_GoToSupervisor() ASM_KEYWORD("svc 0x0")
 #define SVC_GoToUser()       ASM_KEYWORD("svc 0x1")
 
+#define SCB_CCR_DC_MASK (1UL << 16U)
+#define SCB_CCR_IC_MASK (1UL << 17U)
+#define SCB_CCSIDR_NUMSETS_SHIFT 13U
+#define SCB_CCSIDR_NUMSETS_MASK (0x7FFFUL << 13U)
+#define SCB_CCSIDR_ASSOCIATIVITY_SHIFT 3U
+#define SCB_CCSIDR_ASSOCIATIVITY_MASK  (0x3FFUL << 3U)
+#define SCB_DCISW_SET_SHIFT 5U
+#define SCB_DCISW_SET_MASK  (0x1FFUL << 5U)
+#define SCB_DCISW_WAY_SHIFT 30U
+#define SCB_DCISW_WAY_MASK (3UL << 30U)
+
+/* Cache Size ID Register Macros */
+#define CCSIDR_WAYS(x) (((x) & SCB_CCSIDR_ASSOCIATIVITY_MASK) >> SCB_CCSIDR_ASSOCIATIVITY_SHIFT)
+#define CCSIDR_SETS(x) (((x) & SCB_CCSIDR_NUMSETS_MASK) >> SCB_CCSIDR_NUMSETS_SHIFT)
+
 #define S32_SCB_CPACR_CPx_MASK(CpNum)  (0x3U << S32_SCB_CPACR_CPx_SHIFT(CpNum))
 #define S32_SCB_CPACR_CPx_SHIFT(CpNum) (2U * ((uint32)CpNum))
 #define S32_SCB_CPACR_CPx(CpNum, x)                                                                \
@@ -103,9 +117,6 @@ extern uint32 __RAM_SHAREABLE_SIZE[];
 #define PLATFORM_START_SEC_VAR_CLEARED_32
 #include "Platform_MemMap.h"
 
-/* Allocate a global variable which will be overwritten by the debugger if attached(in CMM), to catch the core after reset. */
-uint32 RESET_CATCH_CORE;
-
 #define PLATFORM_STOP_SEC_VAR_CLEARED_32
 #include "Platform_MemMap.h"
 /*==================================================================================================
@@ -113,6 +124,9 @@ uint32 RESET_CATCH_CORE;
 ==================================================================================================*/
 
 #define PLATFORM_START_SEC_CODE
+#include "Platform_MemMap.h"
+
+#define PLATFORM_STOP_SEC_CODE
 #include "Platform_MemMap.h"
 
 /*================================================================================================*/
@@ -174,16 +188,6 @@ void startup_go_to_user_mode(void) {
 #ifdef MCAL_ENABLE_USER_MODE_SUPPORT
     ASM_KEYWORD("svc 0x1");
 #endif
-}
-
-/*================================================================================================*/
-/**
-* @brief   Default IRQ handler
-* @details Infinite Loop
-*/
-/*================================================================================================*/
-void default_interrupt_routine(void) {
-    while (TRUE) {};
 }
 
 /*================================================================================================*/
@@ -295,6 +299,7 @@ uint8 Sys_GetCoreID(void) {
  * system initialization : system clock, interrupt router ...
  */
 
+void SystemInit(void) __attribute__((section(".systeminit")));
 void SystemInit(void) {
     uint32 i;
     uint32 coreMask = 0UL;
@@ -696,6 +701,7 @@ static INLINE void sys_m7_cache_clean(void) {
 /**************************************************************************/
 /* FPU ENABLE*/
 /**************************************************************************/
+void Enable_FPU(void) __attribute__((section(".systeminit")));
 void Enable_FPU(void) {
 #ifdef ENABLE_FPU
     /* Enable CP10 and CP11 coprocessors */
@@ -705,9 +711,6 @@ void Enable_FPU(void) {
     MCAL_INSTRUCTION_SYNC_BARRIER();
 #endif /* ENABLE_FPU */
 }
-
-#define PLATFORM_STOP_SEC_CODE
-#include "Platform_MemMap.h"
 
 #ifdef __cplusplus
 }

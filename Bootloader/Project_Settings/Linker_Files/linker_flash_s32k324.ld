@@ -38,6 +38,7 @@
 * standby_data section should contain only uninitialized data
 */
 __STANDBY_RAM_LIMIT_END  = 0x20407FFF;  /* 32Kbyte for standby ram */
+__INT_VECTORS_COUNT = 229;
 
 ENTRY(Reset_Handler)
 
@@ -45,8 +46,8 @@ MEMORY
 {
     int_pfblflash           : ORIGIN = 0x00400000, LENGTH = 0x00100000    /* 1024KB */
     int_pappflash           : ORIGIN = 0x00500000, LENGTH = 0x002D4000    /* 3072KB - 176KB (sBAF + HSE)*/
-    int_dbootheader         : ORIGIN = 0x10000000, LENGTH = 0x00000218    /* 536B */
-    int_dflash              : ORIGIN = 0x10000218, LENGTH = 0x0001FDE8    /* 128KB - 536B */
+    int_dbootheader         : ORIGIN = 0x10000000, LENGTH = 0x00002000    /* 8KB */
+    int_dflash              : ORIGIN = 0x10002000, LENGTH = 0x0001E000    /* 120KB */
     int_itcm                : ORIGIN = 0x00000000, LENGTH = 0x00008000    /* 32KB */
     int_dtcm                : ORIGIN = 0x20000000, LENGTH = 0x0000F000    /* 60KB */
     int_stack_dtcm          : ORIGIN = 0x2000F000, LENGTH = 0x00001000    /* 4KB */
@@ -75,10 +76,6 @@ SECTIONS
         . = ALIGN(8);
         __interrupts_init_end = .;
         KEEP(*(.core_loop))
-        . = ALIGN(4);
-        *(.startup)
-        . = ALIGN(4);
-        *(.systeminit)
         . = ALIGN(4);
         *(.text.startup)
         . = ALIGN(4);
@@ -122,8 +119,12 @@ SECTIONS
 
     .bootheader :
     {
-        KEEP(*(.boot_header))
         /* . = ALIGN(8192); */ /* The minimum erase size of C40 Flash IP is 8kb */
+        KEEP(*(.boot_header))
+        *(.startup)
+        . = ALIGN(4);
+        *(.systeminit)
+        . = ALIGN(4);
     } > int_dbootheader
 
     .sram_bss (NOLOAD) :
@@ -225,6 +226,7 @@ SECTIONS
         . = ALIGN(2048);
         __interrupts_ram_start = .;
         . += __interrupts_init_end - __interrupts_init_start;
+        . += __INT_VECTORS_COUNT * 4;
         . = ALIGN(8);
         __interrupts_ram_end = .;
     } > int_dtcm

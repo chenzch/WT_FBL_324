@@ -40,7 +40,7 @@ void _core_loop(void) {
 }
 #endif
 
-extern const uint32_t __RAM_INTERRUPT_START[];
+extern uint32_t       __RAM_INTERRUPT_START[];
 extern const uint32_t __INIT_INTERRUPT_START[];
 
 void init_data_bss(void);
@@ -293,14 +293,6 @@ void Reset_Handler(void) {
         }
     }
 
-#ifndef NDEBUG
-    {
-        extern uint32_t RESET_CATCH_CORE;
-        while (0x5A5A5A5A == RESET_CATCH_CORE)
-            ;
-    }
-#endif
-
     /******************************************************************/
     /* Autosar Guidance   - The start-up code shall initialize the    */
     /* user stack pointer. The user stack pointer base address and    */
@@ -352,6 +344,16 @@ void Reset_Handler(void) {
         init_data_bss();
     } else {
         init_data_bss_core2();
+    }
+    /* Fill other NUMBER_OF_INT_VECTORS Default_Handler for __RAM_INTERRUPT_START[16] */
+    {
+        extern uint32_t __interrupts_ram_end[];
+        extern void     Default_Handler(void);
+        uint32_t       *pISR = &__RAM_INTERRUPT_START[16];
+        uint32_t       *pEnd = __interrupts_ram_end;
+        while (pISR < pEnd) {
+            *(pISR++) = (uint32_t)&Default_Handler;
+        }
     }
 #endif
 

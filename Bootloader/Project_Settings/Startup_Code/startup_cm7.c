@@ -21,11 +21,11 @@
 #include "Platform_TypesDef.h"
 
 #ifdef MULTIPLE_IMAGE
-    #define RAM_DATA_INIT_ON_ALL_CORES
-    /* If this is a secodary core, it shall wait for the MSCM clock to be initialized */
-    #if defined(CORE1)||defined(CORE2)||defined(CORE3)
-        #define NO_MSCM_CLOCK_INIT
-    #endif
+#define RAM_DATA_INIT_ON_ALL_CORES
+/* If this is a secodary core, it shall wait for the MSCM clock to be initialized */
+#if defined(CORE1) || defined(CORE2) || defined(CORE3)
+#define NO_MSCM_CLOCK_INIT
+#endif
 #endif
 
 #ifdef MCAL_TESTING_ENVIRONMENT
@@ -40,7 +40,7 @@ void _core_loop(void) {
 }
 #endif
 
-extern const uint32_t __RAM_INTERRUPT_START[];
+extern uint32_t       __RAM_INTERRUPT_START[];
 extern const uint32_t __INIT_INTERRUPT_START[];
 
 void init_data_bss(void);
@@ -48,7 +48,7 @@ void init_data_bss_core2(void);
 void SystemInit(void);
 void Enable_FPU(void);
 void startup_go_to_user_mode(void);
-int main(void);
+int  main(void);
 
 /************************************************************************/
 /* Autosar startup code (See MCU Specification):                        */
@@ -67,7 +67,8 @@ int main(void);
 /*   functionality might not be supported. No code will be found in     */
 /*   case.                                                              */
 /************************************************************************/
-void Reset_Handler(void) __attribute__((naked, __noreturn__, target("general-regs-only"), section(".startup")));
+void Reset_Handler(void)
+    __attribute__((naked, __noreturn__, target("general-regs-only"), section(".startup")));
 void Reset_Handler(void) {
     /*****************************************************/
     /* Skip normal entry point as nothing is initialized */
@@ -254,10 +255,11 @@ void Reset_Handler(void) {
         if (0 != (uint32_t)__RAM_INIT) {
             extern uint64_t __INT_SRAM_START[];
             extern uint64_t __INT_SRAM_END[];
-            uint64_t* pStart = __INT_SRAM_START;
-            uint64_t* pEnd = __INT_SRAM_END;
+            uint64_t       *pStart = __INT_SRAM_START;
+            uint64_t       *pEnd   = __INT_SRAM_END;
             /* NO_INIT_STANDBY_REGION */
-#if defined(EXTEND_LOWRAM_DERIVATIVES) && (defined(S32K310) || defined(S32K311) || defined(S32M276) || defined(S32M274))
+#if defined(EXTEND_LOWRAM_DERIVATIVES) &&                                                          \
+    (defined(S32K310) || defined(S32K311) || defined(S32M276) || defined(S32M274))
             if (0 == (IP_MC_RGM->DES & MC_RGM_DES_F_POR_MASK)) {
                 extern uint64_t __BSS_SRAM_NC_START[];
                 gStart = __BSS_SRAM_NC_START;
@@ -310,8 +312,8 @@ void Reset_Handler(void) {
     if (0 != (uint32_t)__DTCM_INIT) {
         extern uint64_t __INT_DTCM_START[];
         extern uint64_t __INT_DTCM_END[];
-        uint64_t* pStart = __INT_DTCM_START;
-        uint64_t* pEnd = __INT_DTCM_END;
+        uint64_t       *pStart = __INT_DTCM_START;
+        uint64_t       *pEnd   = __INT_DTCM_END;
 
         QWORDALIGH(pStart);
         QWORDALIGH(pEnd);
@@ -327,8 +329,8 @@ void Reset_Handler(void) {
     if (0 != (uint32_t)__ITCM_INIT) {
         extern uint64_t __INT_ITCM_START[];
         extern uint64_t __INT_ITCM_END[];
-        uint64_t* pStart = __INT_ITCM_START;
-        uint64_t* pEnd = __INT_ITCM_END;
+        uint64_t       *pStart = __INT_ITCM_START;
+        uint64_t       *pEnd   = __INT_ITCM_END;
 
         QWORDALIGH(pStart);
         QWORDALIGH(pEnd);
@@ -338,13 +340,6 @@ void Reset_Handler(void) {
         }
     }
 
-    #ifndef NDEBUG
-    {
-        extern uint32_t RESET_CATCH_CORE;
-        while (0x5A5A5A5A == RESET_CATCH_CORE);
-    }
-    #endif
-
     /******************************************************************/
     /* Autosar Guidance   - The start-up code shall initialize the    */
     /* user stack pointer. The user stack pointer base address and    */
@@ -353,11 +348,7 @@ void Reset_Handler(void) {
     /******************************************************************/
 
     /* set up stack; r13 SP*/
-    __asm (
-		"msr msp, %[inputSP] \t\n"
-    	:
-    	: [inputSP] "r" (__Stack_dtcm_start)
-    );
+    __asm("msr msp, %[inputSP] \t\n" : : [inputSP] "r"(__Stack_dtcm_start));
 
 #if defined(MULTIPLE_CORE) && !defined(MULTIPLE_IMAGE)
     /*GetCoreID*/
@@ -366,23 +357,25 @@ void Reset_Handler(void) {
 #if (CM7_1_ENABLE == 0)
         /* EnableCore1 */
         if (0 == (IP_MC_ME->PRTN0_CORE1_STAT & MC_ME_PRTN0_CORE1_STAT_CCS_MASK)) {
-            IP_MC_ME->PRTN0_CORE1_ADDR = (uint32_t)__INIT_INTERRUPT_START;
+            IP_MC_ME->PRTN0_CORE1_ADDR  = (uint32_t)__INIT_INTERRUPT_START;
             IP_MC_ME->PRTN0_CORE1_PCONF = MC_ME_PRTN0_CORE1_PCONF_CCE_MASK;
-            IP_MC_ME->PRTN0_CORE1_PUPD = MC_ME_PRTN0_CORE1_PUPD_CCUPD_MASK;
-            IP_MC_ME->CTL_KEY = MCME_KEY;
-            IP_MC_ME->CTL_KEY = MCME_INV_KEY;
-            while (0 == (IP_MC_ME->PRTN0_CORE1_STAT & MC_ME_PRTN0_CORE1_STAT_CCS_MASK));
+            IP_MC_ME->PRTN0_CORE1_PUPD  = MC_ME_PRTN0_CORE1_PUPD_CCUPD_MASK;
+            IP_MC_ME->CTL_KEY           = MCME_KEY;
+            IP_MC_ME->CTL_KEY           = MCME_INV_KEY;
+            while (0 == (IP_MC_ME->PRTN0_CORE1_STAT & MC_ME_PRTN0_CORE1_STAT_CCS_MASK))
+                ;
         }
 #endif
 #if (CM7_2_ENABLE == 0)
         /* EnableCore2 */
         if (0 == (IP_MC_ME->PRTN0_CORE4_STAT & MC_ME_PRTN0_CORE4_STAT_CCS_MASK)) {
-            IP_MC_ME->PRTN0_CORE4_ADDR = (uint32_t)__INIT_INTERRUPT_START;
+            IP_MC_ME->PRTN0_CORE4_ADDR  = (uint32_t)__INIT_INTERRUPT_START;
             IP_MC_ME->PRTN0_CORE4_PCONF = MC_ME_PRTN0_CORE4_PCONF_CCE_MASK;
-            IP_MC_ME->PRTN0_CORE4_PUPD = MC_ME_PRTN0_CORE4_PUPD_CCUPD_MASK;
-            IP_MC_ME->CTL_KEY = MCME_KEY;
-            IP_MC_ME->CTL_KEY = MCME_INV_KEY;
-            while (0 == (IP_MC_ME->PRTN0_CORE4_STAT & MC_ME_PRTN0_CORE4_STAT_CCS_MASK));
+            IP_MC_ME->PRTN0_CORE4_PUPD  = MC_ME_PRTN0_CORE4_PUPD_CCUPD_MASK;
+            IP_MC_ME->CTL_KEY           = MCME_KEY;
+            IP_MC_ME->CTL_KEY           = MCME_INV_KEY;
+            while (0 == (IP_MC_ME->PRTN0_CORE4_STAT & MC_ME_PRTN0_CORE4_STAT_CCS_MASK))
+                ;
         }
 #endif
     }
@@ -398,6 +391,16 @@ void Reset_Handler(void) {
         init_data_bss();
     } else {
         init_data_bss_core2();
+    }
+    /* Fill other NUMBER_OF_INT_VECTORS Default_Handler for __RAM_INTERRUPT_START[16] */
+    {
+        extern uint32_t __interrupts_ram_end[];
+        extern void     Default_Handler(void);
+        uint32_t       *pISR = &__RAM_INTERRUPT_START[16];
+        uint32_t       *pEnd = __interrupts_ram_end;
+        while (pISR < pEnd) {
+            *(pISR++) = (uint32_t)&Default_Handler;
+        }
     }
 #endif
 
@@ -476,7 +479,6 @@ void Reset_Handler(void) {
     /* Set the small ro data pointer */
     /*********************************/
 
-
     /*********************************/
     /* Set the small rw data pointer */
     /*********************************/
@@ -492,7 +494,8 @@ void Reset_Handler(void) {
 /******************************************************************/
 /* Init runtime check data space                                  */
 /******************************************************************/
-void MCAL_LTB_TRACE_OFF(void) __attribute__((naked, __noreturn__, target("general-regs-only"), section(".startup")));
+void MCAL_LTB_TRACE_OFF(void)
+    __attribute__((naked, __noreturn__, target("general-regs-only"), section(".startup")));
 void MCAL_LTB_TRACE_OFF(void) {
     __asm("nop");
 #ifdef CCOV_ENABLE
@@ -500,24 +503,28 @@ void MCAL_LTB_TRACE_OFF(void) {
     /* code coverage is requested */
     ccov_main()
 #endif
-    for(;;);
+        for (;;);
 }
 
 /*BKPT #1 - removed to avoid debug fault being escalated to hardfault when debugger is not attached or on VDK*/ /* last instruction for the debugger to dump results data */
-void _end_of_eunit_test(void) __attribute__((naked, __noreturn__, target("general-regs-only"), section(".startup")));
+void _end_of_eunit_test(void)
+    __attribute__((naked, __noreturn__, target("general-regs-only"), section(".startup")));
 void _end_of_eunit_test(void) {
-    for(;;);
+    for (;;)
+        ;
 }
 
 #ifdef MCAL_ENABLE_USER_MODE_SUPPORT
 
-void startup_getControlRegisterValue(void) __attribute__((naked, __noreturn__, target("general-regs-only"), section(".startup")));
+void startup_getControlRegisterValue(void)
+    __attribute__((naked, __noreturn__, target("general-regs-only"), section(".startup")));
 void startup_getControlRegisterValue(void) {
     __asm("mrs r0, CONTROL \n");
     __asm("bx r14 \n");
 }
 
-void startup_getAipsRegisterValue(void) __attribute__((naked, __noreturn__, target("general-regs-only"), section(".startup")));
+void startup_getAipsRegisterValue(void)
+    __attribute__((naked, __noreturn__, target("general-regs-only"), section(".startup")));
 void startup_getAipsRegisterValue(void) {
     __asm("mrs r0, IPSR \n");
     __asm("bx r14 \n");

@@ -103,9 +103,6 @@ extern uint32 __RAM_SHAREABLE_SIZE[];
 #define PLATFORM_START_SEC_VAR_CLEARED_32
 #include "Platform_MemMap.h"
 
-/* Allocate a global variable which will be overwritten by the debugger if attached(in CMM), to catch the core after reset. */
-uint32 RESET_CATCH_CORE;
-
 #define PLATFORM_STOP_SEC_VAR_CLEARED_32
 #include "Platform_MemMap.h"
 /*==================================================================================================
@@ -174,16 +171,6 @@ void startup_go_to_user_mode(void) {
 #ifdef MCAL_ENABLE_USER_MODE_SUPPORT
     ASM_KEYWORD("svc 0x1");
 #endif
-}
-
-/*================================================================================================*/
-/**
-* @brief   Default IRQ handler
-* @details Infinite Loop
-*/
-/*================================================================================================*/
-void default_interrupt_routine(void) {
-    while (TRUE) {};
 }
 
 /*================================================================================================*/

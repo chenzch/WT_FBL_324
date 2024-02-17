@@ -159,11 +159,9 @@ static const struct {
  *
  * Implements    : init_data_bss_Activity
  *END**************************************************************************/
-#define PLATFORM_START_SEC_CODE
-#include "Platform_MemMap.h"
 
-void init_data_bss(void);
-void init_data_bss_core2(void);
+void init_data_bss(void) __attribute__((section(".systeminit")));
+void init_data_bss_core2(void) __attribute__((section(".systeminit")));
 
 void init_data_bss(void) {
     const Sys_CopyLayoutType *copy_layout;
@@ -232,8 +230,6 @@ void init_data_bss_core2(void)
         }
     }
 }
-#define PLATFORM_STOP_SEC_CODE
-#include "Platform_MemMap.h"
 
 /*******************************************************************************
  * EOF
