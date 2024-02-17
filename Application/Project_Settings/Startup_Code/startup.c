@@ -1,7 +1,7 @@
 /*==================================================================================================
 *   Project              : RTD AUTOSAR 4.7
 *   Platform             : CORTEXM
-*   Peripheral           : 
+*   Peripheral           :
 *   Dependencies         : none
 *
 *   Autosar Version      : 4.7.0
@@ -24,43 +24,119 @@
 *   @implements startup.c_Artifact
 */
 
-
-#include "Std_Types.h"
+#include "platform.h"
 
 /*******************************************************************************
  * Definitions
  *******************************************************************************/
- /*!
+/*!
  * @brief Defines the init table layout
  */
-typedef struct
-{
-    uint32 * ram_start; /*!< Start address of section in RAM */
-    uint32 * rom_start; /*!< Start address of section in ROM */
-    uint32 * rom_end;   /*!< End address of section in ROM */
+typedef struct {
+    uint64_t       *ram_start; /*!< Start address of section in RAM */
+    const uint64_t *rom_start; /*!< Start address of section in ROM */
+    const uint64_t *rom_end;   /*!< End address of section in ROM */
 } Sys_CopyLayoutType;
 
 /*!
  * @brief Defines the zero table layout
  */
-typedef struct
-{
-    uint32 * ram_start; /*!< Start address of section in RAM */
-    uint32 * ram_end;   /*!< End address of section in RAM */
+typedef struct {
+    uint64_t *ram_start; /*!< Start address of section in RAM */
+    uint64_t *ram_end;   /*!< End address of section in RAM */
 } Sys_ZeroLayoutType;
 
-extern uint32 __INIT_TABLE[];
-extern uint32 __ZERO_TABLE[];
 extern uint32 __INDEX_COPY_CORE2[];
-#if (defined(__ARMCC_VERSION))
-    extern uint32 __VECTOR_RAM;
-#else
-    extern uint32 __VECTOR_RAM[];
-#endif
 
 /*******************************************************************************
  * Static Variables
  ******************************************************************************/
+
+extern uint64_t       __RAM_CACHEABLE_START[];
+extern const uint64_t __ROM_CACHEABLE_START[];
+extern const uint64_t __ROM_CACHEABLE_END[];
+extern uint64_t       __RAM_NO_CACHEABLE_START[];
+extern const uint64_t __ROM_NO_CACHEABLE_START[];
+extern const uint64_t __ROM_NO_CACHEABLE_END[];
+extern uint64_t       __RAM_SHAREABLE_START[];
+extern const uint64_t __ROM_SHAREABLE_START[];
+extern const uint64_t __ROM_SHAREABLE_END[];
+extern uint64_t       __RAM_INTERRUPT_START[];
+extern const uint64_t __INIT_INTERRUPT_START[];
+extern const uint64_t __INIT_INTERRUPT_END[];
+extern uint64_t       __RAM_ITCM_START[];
+extern const uint64_t __ROM_ITCM_START[];
+extern const uint64_t __ROM_ITCM_END[];
+extern uint64_t       __RAM_DTCM_DATA_START[];
+extern const uint64_t __ROM_DTCM_DATA_START[];
+extern const uint64_t __ROM_DTCM_END[];
+
+static const struct {
+    uint32_t                 size;
+    const Sys_CopyLayoutType table[6];
+} InitTable = {
+    6,
+    {
+        {
+            __RAM_CACHEABLE_START,
+            __ROM_CACHEABLE_START,
+            __ROM_CACHEABLE_END,
+        },
+        {
+            __RAM_NO_CACHEABLE_START,
+            __ROM_NO_CACHEABLE_START,
+            __ROM_NO_CACHEABLE_END,
+        },
+        {
+            __RAM_SHAREABLE_START,
+            __ROM_SHAREABLE_START,
+            __ROM_SHAREABLE_END,
+        },
+        {
+            __RAM_INTERRUPT_START,
+            __INIT_INTERRUPT_START,
+            __INIT_INTERRUPT_END,
+        },
+        {
+            __RAM_ITCM_START,
+            __ROM_ITCM_START,
+            __ROM_ITCM_END,
+        },
+        {
+            __RAM_DTCM_DATA_START,
+            __ROM_DTCM_DATA_START,
+            __ROM_DTCM_END,
+        },
+    },
+};
+
+extern uint64_t __BSS_SRAM_SH_START[];
+extern uint64_t __BSS_SRAM_SH_END[];
+extern uint64_t __BSS_SRAM_NC_START[];
+extern uint64_t __BSS_SRAM_NC_END[];
+extern uint64_t __BSS_SRAM_START[];
+extern uint64_t __BSS_SRAM_END[];
+
+static const struct {
+    uint32_t                 size;
+    const Sys_ZeroLayoutType table[3];
+} ZeroTable = {
+    3,
+    {
+        {
+            __BSS_SRAM_SH_START,
+            __BSS_SRAM_SH_END,
+        },
+        {
+            __BSS_SRAM_NC_START,
+            __BSS_SRAM_NC_END,
+        },
+        {
+            __BSS_SRAM_START,
+            __BSS_SRAM_END,
+        },
+    },
+};
 
 /*******************************************************************************
  * Code
@@ -85,69 +161,46 @@ extern uint32 __INDEX_COPY_CORE2[];
  *END**************************************************************************/
 #define PLATFORM_START_SEC_CODE
 #include "Platform_MemMap.h"
- 
+
 void init_data_bss(void);
 void init_data_bss_core2(void);
 
-void init_data_bss(void)
-{
-    const Sys_CopyLayoutType * copy_layout;
-    const Sys_ZeroLayoutType * zero_layout;
-    const uint32 * rom;
-    const uint8 * rom8;
-    uint32 * ram;
-    uint8 * ram8;
-    uint8 dataPad;
-    uint32 len = 0U;
-    uint32 size = 0U;
-    uint32 i = 0U;
-    uint32 j = 0U;
+void init_data_bss(void) {
+    const Sys_CopyLayoutType *copy_layout;
+    const Sys_ZeroLayoutType *zero_layout;
 
-    const uint32 * initTable_Ptr = (uint32 *)__INIT_TABLE;
-    const uint32 * zeroTable_Ptr = (uint32*)__ZERO_TABLE;
+    const uint64_t *rom;
+    const uint64_t *romEnd;
+    uint64_t       *ram;
+
+    uint32_t len;
+    uint32_t i;
 
     /* Copy initialized table */
-    len = *initTable_Ptr;
-    initTable_Ptr++;
-    copy_layout = (const Sys_CopyLayoutType *)initTable_Ptr;
-    for(i = 0; i < len; i++)
-    {
-        rom = copy_layout[i].rom_start;
-        ram = copy_layout[i].ram_start;
-        size = (uint32)copy_layout[i].rom_end - (uint32)copy_layout[i].rom_start;
-        /* Make sure the data area to be copied must be aligned with 4. Then, copy 4 bytes at per one read */
-        dataPad = size & 0x3U;
-        for(j = 0UL; j < ((size - dataPad) >> 2); j++)
-        {
-            ram[j] = rom[j];
-        }
-        /* For the rest of data, copy 1 bytes at per one read */
-        rom8 = (uint8 *)&(rom[j]);
-        ram8 = (uint8 *)&(ram[j]);
-        for (j = 0; j < dataPad; j++)
-        {
-            ram8[j] = rom8[j];
+    len         = InitTable.size;
+    copy_layout = &InitTable.table[0];
+    for (i = 0; i < len; ++i, ++copy_layout) {
+        ram    = copy_layout->ram_start;
+        rom    = copy_layout->rom_start;
+        romEnd = copy_layout->rom_end;
+        QWORDALIGH(ram);
+        QWORDALIGH(rom);
+        QWORDALIGH(romEnd);
+        while (rom < romEnd) {
+            *(ram++) = *(rom++);
         }
     }
-    
-    /* Clear zero table */
-    len = *zeroTable_Ptr;
-    zeroTable_Ptr++;
-    zero_layout = (const Sys_ZeroLayoutType *)zeroTable_Ptr;
-    for(i = 0; i < len; i++)
-    {
-        ram = zero_layout[i].ram_start;
-        size = (uint32)zero_layout[i].ram_end - (uint32)zero_layout[i].ram_start;
 
-        for(j = 0UL; j < (size >> 2); j++)
-        {
-            ram[j] = 0U;
-        }
-        /* Since the size of the section always aligns with 32bits according to the sample file linker. 
-           Zeroing the last 4 bytes of the section if the data to be used of program does not align with 4.*/
-        if ((size & 0x3U) != 0)
-        {
-            ram[j] = 0;
+    /* Clear zero table */
+    len         = ZeroTable.size;
+    zero_layout = &ZeroTable.table[0];
+    for (i = 0; i < len; ++i, ++zero_layout) {
+        ram    = zero_layout->ram_start;
+        romEnd = zero_layout->ram_end;
+        QWORDALIGH(ram);
+        QWORDALIGH(romEnd);
+        while (ram < romEnd) {
+            *(ram++) = 0;
         }
     }
 }
@@ -155,38 +208,27 @@ void init_data_bss(void)
 void init_data_bss_core2(void)
 {
     const Sys_CopyLayoutType * copy_layout;
-    const uint32 * rom;
-    const uint8 * rom8;
-    uint32 * ram;
-    uint8 * ram8;
-    uint8 dataPad;
-    uint32 len = 0U;
-    uint32 size = 0U;
-    uint32 i = 0U;
-    uint32 j = 0U;
 
-    const uint32 * initTable_Ptr = (uint32 *)__INIT_TABLE;
+    const uint64_t *rom;
+    const uint64_t *romEnd;
+    uint64_t       *ram;
+
+    uint32_t len;
+    uint32_t i;
 
     /* Copy initialized table */
-    len = *initTable_Ptr;
-    initTable_Ptr++;
-    copy_layout = (const Sys_CopyLayoutType *)initTable_Ptr;
-    for(i = (uint32)__INDEX_COPY_CORE2; i < len; i++)
-    {
-        rom = copy_layout[i].rom_start;
-        ram = copy_layout[i].ram_start;
-        size = (uint32)copy_layout[i].rom_end - (uint32)copy_layout[i].rom_start;
-        /* Make sure the data area to be copied must be aligned with 4. Then, copy 4 bytes at per one read */
-        dataPad = size & 0x3U;
-        for(j = 0UL; j < ((size - dataPad) >> 2); j++)
-        {
-            ram[j] = rom[j];
-        }
-        rom8 = (uint8 *)&(rom[j]);
-        ram8 = (uint8 *)&(ram[j]);
-        for (j = 0; j < dataPad; j++)
-        {
-            ram8[j] = rom8[j];
+    len         = InitTable.size;
+    copy_layout = &InitTable.table[i = (uint32)__INDEX_COPY_CORE2];
+
+    for (; i < len; ++i, ++copy_layout) {
+        ram    = copy_layout->ram_start;
+        rom    = copy_layout->rom_start;
+        romEnd = copy_layout->rom_end;
+        QWORDALIGH(ram);
+        QWORDALIGH(rom);
+        QWORDALIGH(romEnd);
+        while (rom < romEnd) {
+            *(ram++) = *(rom++);
         }
     }
 }

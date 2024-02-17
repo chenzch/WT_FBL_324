@@ -1,7 +1,7 @@
 /*==================================================================================================
 *   Project              : RTD AUTOSAR 4.7
 *   Platform             : CORTEXM
-*   Peripheral           : 
+*   Peripheral           :
 *   Dependencies         : none
 *
 *   Autosar Version      : 4.7.0
@@ -35,8 +35,7 @@
 .section  ".intc_vector","ax"
 .align 2
 .thumb
-.globl undefined_handler
-.globl undefined_handler
+.globl Default_Handler
 .globl VTABLE
 .globl _core_loop
 .globl __Stack_dtcm_start        /* Top of Stack for Initial Stack Pointer */
@@ -74,251 +73,247 @@ VTABLE:
 .long PendSV_Handler            /* PendSV Handler */
 .long SysTick_Handler           /* SysTick Handler */ /* 15*/
 
-.long undefined_handler /*0*/
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler /*10*/
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler 
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler /*20*/
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler 
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler /*30*/
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler 
-.long undefined_handler /*40*/
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler 
-.long undefined_handler
-.long undefined_handler /*50*/
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler /*60*/
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler 
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler /*70*/
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler /*80*/
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler /*90*/
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler 
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler /*100*/
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler /*110*/
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler /*120*/
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler /*130*/
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler /*140*/
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler /*150*/
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler /*160*/
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler /*170*/
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler /*180*/
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler /*190*/
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler /*200*/
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler /*210*/
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler /*220*/
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler /*230*/
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler
-.long undefined_handler /*240*/
-.long undefined_handler
-
-
-
+.long Default_Handler /*0*/
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler /*10*/
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler /*20*/
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler /*30*/
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler /*40*/
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler /*50*/
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler /*60*/
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler /*70*/
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler /*80*/
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler /*90*/
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler /*100*/
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler /*110*/
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler /*120*/
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler /*130*/
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler /*140*/
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler /*150*/
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler /*160*/
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler /*170*/
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler /*180*/
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler /*190*/
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler /*200*/
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler /*210*/
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler /*220*/
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler /*230*/
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler
+.long Default_Handler /*240*/
+.long Default_Handler
 
 .size VTABLE, . - VTABLE
-

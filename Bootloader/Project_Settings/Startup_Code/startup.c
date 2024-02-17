@@ -46,8 +46,6 @@ typedef struct {
     uint64_t *ram_end;   /*!< End address of section in RAM */
 } Sys_ZeroLayoutType;
 
-extern uint32 __INIT_TABLE[];
-extern uint32 __ZERO_TABLE[];
 extern uint32 __INDEX_COPY_CORE2[];
 
 /*******************************************************************************

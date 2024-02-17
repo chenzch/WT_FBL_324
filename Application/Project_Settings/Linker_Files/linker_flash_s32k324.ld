@@ -1,7 +1,7 @@
 /*==================================================================================================
 *   Project              : RTD AUTOSAR 4.7
 *   Platform             : CORTEXM
-*   Peripheral           : 
+*   Peripheral           :
 *   Dependencies         : none
 *
 *   Autosar Version      : 4.7.0
@@ -37,15 +37,16 @@
 * Last 176 KB of CODE_FLASH reserved by HSE Firmware
 * standby_data section should contain only uninitialized data
 */
-/* HEAP_SIZE  = DEFINED(__heap_size__)  ? __heap_size__  : 0x00002000; */
 __STANDBY_RAM_LIMIT_END  = 0x20407FFF;  /* 32Kbyte for standby ram */
 
 ENTRY(Reset_Handler)
 
 MEMORY
 {
-    int_pflash              : ORIGIN = 0x00400000, LENGTH = 0x003D4000    /* 4096KB - 176KB (sBAF + HSE)*/
-    int_dflash              : ORIGIN = 0x10000000, LENGTH = 0x00020000    /* 128KB */
+    int_pfblflash           : ORIGIN = 0x00400000, LENGTH = 0x00100000    /* 1024KB */
+    int_pappflash           : ORIGIN = 0x00500000, LENGTH = 0x002D4000    /* 3072KB - 176KB (sBAF + HSE)*/
+    int_dbootheader         : ORIGIN = 0x10000000, LENGTH = 0x00000218    /* 536B */
+    int_dflash              : ORIGIN = 0x10000218, LENGTH = 0x0001FDE8    /* 128KB - 536B */
     int_itcm                : ORIGIN = 0x00000000, LENGTH = 0x00008000    /* 32KB */
     int_dtcm                : ORIGIN = 0x20000000, LENGTH = 0x0000F000    /* 60KB */
     int_stack_dtcm          : ORIGIN = 0x2000F000, LENGTH = 0x00001000    /* 4KB */
@@ -53,21 +54,26 @@ MEMORY
     int_sram_fls_rsv        : ORIGIN = 0x2042FF00, LENGTH = 0x00000100
     int_sram_no_cacheable   : ORIGIN = 0x20430000, LENGTH = 0x0000FF00    /* 64KB, needs to include int_sram_results  */
     int_sram_results        : ORIGIN = 0x2043FF00, LENGTH = 0x00000100
-    int_sram_shareable      : ORIGIN = 0x20440000, LENGTH = 0x00004000    /* 16KB */
-    ram_rsvd2               : ORIGIN = 0x20444000, LENGTH = 0             /* End of SRAM */
+    int_sram_shareable      : ORIGIN = 0x20440000, LENGTH = 0x00003FF0    /* 16KB - 16B */
+    ram_rsvd2               : ORIGIN = 0x20443FF0, LENGTH = 0x00000000    /* End of SRAM */
+    int_exchange            : ORIGIN = 0x20443FF0, LENGTH = 0x00000010    /* 16B, exchange area */
 }
 
 SECTIONS
 {
 
-    .pflash :
+    .pfblflash :
     {
         KEEP(*(.boot_header))
-        . = ALIGN(8192);  /* The minimum erase size of C40 Flash IP is 8kb */
+    } > int_pfblflash
+
+    .pappflash :
+    {
+        . = ALIGN(8);
         __text_start = .;
         __interrupts_init_start = .;
         KEEP(*(.intc_vector))
-        . = ALIGN(4);
+        . = ALIGN(8);
         __interrupts_init_end = .;
         KEEP(*(.core_loop))
         . = ALIGN(4);
@@ -83,14 +89,14 @@ SECTIONS
         *(.mcal_text)
         . = ALIGN(4);
         *(.acmcu_code_rom)
-        . = ALIGN(4);
+        . = ALIGN(8);
         __acfls_code_rom_start = .;
         *(.acfls_code_rom)
-        . = ALIGN(4);
+        . = ALIGN(8);
         __acfls_code_rom_end = .;
         __acmem_43_infls_code_rom_start = .;
         *(.acmem_43_infls_code_rom)
-        . = ALIGN(4);
+        . = ALIGN(8);
         __acmem_43_infls_code_rom_end = .;
         KEEP(*(.init))
         . = ALIGN(4);
@@ -102,15 +108,10 @@ SECTIONS
         *(.mcal_const_cfg)
         . = ALIGN(4);
         *(.mcal_const)
-        . = ALIGN(4);
-        __init_table = .;
-        KEEP(*(.init_table))
-        . = ALIGN(4);
-        __zero_table = .;
-        KEEP(*(.zero_table))
-    } > int_pflash
+        . = ALIGN(8);
+    } > int_pappflash
 
-    . = ALIGN(4);
+    . = ALIGN(8);
     __text_end = .;
     __sram_data_rom = __text_end;
 
@@ -133,7 +134,7 @@ SECTIONS
 
     .sram_data : AT(__sram_data_rom)
     {
-        . = ALIGN(4);
+        . = ALIGN(8);
         __sram_data_begin__ = .;
         . = ALIGN(4);
         *(.ramcode)
@@ -142,30 +143,22 @@ SECTIONS
         *(.data*)
         . = ALIGN(4);
         *(.mcal_data)
-        . = ALIGN(4);
+        . = ALIGN(8);
         __sram_data_end__ = .;
     } > int_sram
 
     __sram_data_rom_end = __sram_data_rom + (__sram_data_end__ - __sram_data_begin__);
 
-    /* heap section */
-    /*.heap (NOLOAD):
-    {
-        . += ALIGN(4);
-        _end = .;
-        end = .;
-        _heap_start = .;
-        . += HEAP_SIZE;
-        _heap_end = .;
-    } > int_sram */
-
     .acfls_code_ram :
     {
+        . = ALIGN(8);
         __acfls_code_ram_start  = .;
         *(.acfls_code_ram)
+        . = ALIGN(8);
         __acfls_code_ram_end   = .;
         __acmem_43_infls_code_ram_start = .;
         *(.acmem_43_infls_code_ram)
+        . = ALIGN(8);
         __acmem_43_infls_code_ram_end = .;
     } > int_sram_fls_rsv
 
@@ -173,7 +166,7 @@ SECTIONS
 
     .non_cacheable_data : AT(__non_cacheable_data_rom)
     {
-        . = ALIGN(4);
+        . = ALIGN(8);
         __non_cacheable_data_start__ = .;
         *(.mcal_data_no_cacheable)
         . = ALIGN(4);
@@ -181,6 +174,7 @@ SECTIONS
         . = ALIGN(4);
         HSE_LOOP_ADDR = .;
         /* LONG(0x0); */
+        . = ALIGN(8);
         __non_cacheable_data_end__ = .;
     } > int_sram_no_cacheable
 
@@ -199,17 +193,17 @@ SECTIONS
     {
         . = ALIGN(4);
         KEEP(*(.int_results))
-        . += 0x100;
+        /* . += 0x100; */
     } > int_sram_results
 
     __shareable_data_rom = __non_cacheable_data_rom_end;
 
     .shareable_data : AT(__shareable_data_rom)
     {
-        . = ALIGN(4);
+        . = ALIGN(8);
         __shareable_data_start__ = .;
         KEEP(*(.mcal_shared_data))
-        . = ALIGN(4);
+        . = ALIGN(8);
         __shareable_data_end__ = .;
     } > int_sram_shareable
 
@@ -220,7 +214,7 @@ SECTIONS
         . = ALIGN(2048);
         __interrupts_ram_start = .;
         . += __interrupts_init_end - __interrupts_init_start;
-        . = ALIGN(4);
+        . = ALIGN(8);
         __interrupts_ram_end = .;
     } > int_dtcm
 
@@ -228,10 +222,10 @@ SECTIONS
 
     .data_tcm_data : AT(__tcm_data_rom)
     {
-        . = ALIGN(4);
+        . = ALIGN(8);
         __dtcm_data_start__ = .;
         *(.dtcm_data*)
-        . = ALIGN(4);
+        . = ALIGN(8);
         __dtcm_data_end__ = .;
     } > int_dtcm
 
@@ -239,10 +233,10 @@ SECTIONS
 
     .bss_tcm_data (NOLOAD) :
     {
-        . = ALIGN(4);
+        . = ALIGN(8);
         __dtcm_bss_start__ = .;
         *(.dtcm_bss*)
-        . = ALIGN(4);
+        . = ALIGN(8);
         __dtcm_bss_end__ = .;
     } > int_dtcm
 
@@ -250,10 +244,10 @@ SECTIONS
 
    .itcm_text : AT(__tcm_code_rom_start)
     {
-        . = ALIGN(4);
+        . = ALIGN(8);
         __itcm_start__ = .;
         *(.itcm_text*)
-        . = ALIGN(4);
+        . = ALIGN(8);
         __itcm_end__ = .;
     } > int_itcm
 
@@ -278,7 +272,7 @@ SECTIONS
     __INT_ITCM_END           = ORIGIN(int_itcm) + LENGTH(int_itcm);
 
     __INT_DTCM_START         = ORIGIN(int_dtcm);
-    __INT_DTCM_END           = ORIGIN(int_dtcm) + LENGTH(int_dtcm) + LENGTH(int_stack_dtcm);
+    __INT_DTCM_END           = ORIGIN(int_dtcm) + LENGTH(int_dtcm);
 
     __RAM_SHAREABLE_START    = __shareable_data_start__;
     __RAM_SHAREABLE_SIZE     = 0xE;  /* 16 kbyte in power of 2 */
@@ -292,7 +286,7 @@ SECTIONS
     __RAM_CACHEABLE_SIZE     = 0x12;  /* 256kbyte in power of 2 */
     __ROM_CACHEABLE_START    = __sram_data_rom;
     __ROM_CACHEABLE_END      = __sram_data_rom_end;
-    __ROM_CODE_START         = ORIGIN(int_pflash);
+    __ROM_CODE_START         = ORIGIN(int_pappflash);
     __ROM_DATA_START         = ORIGIN(int_dflash);
 
     __BSS_SRAM_START         = __sram_bss_start;
@@ -319,31 +313,31 @@ SECTIONS
     __ROM_DTCM_DATA_START    = __tcm_data_rom;
     __ROM_DTCM_END           = __tcm_data_rom_end;
 
-    __INIT_TABLE             = __init_table;
-    __ZERO_TABLE             = __zero_table;
+    __RAM_INIT               = 0;
+    __ITCM_INIT              = 0;
+    __DTCM_INIT              = 0;
 
-    __RAM_INIT               = 1;
-    __ITCM_INIT              = 1;
-    __DTCM_INIT              = 1;
+    __EXCHANGE_START         = ORIGIN(int_exchange);
+    __EXCHANGE_END           = ORIGIN(int_exchange) + LENGTH(int_exchange);
 
     Fls_ACEraseRomStart      = __acfls_code_rom_start;
     Fls_ACEraseRomEnd        = __acfls_code_rom_end;
-    Fls_ACEraseSize          = (__acfls_code_rom_end - __acfls_code_rom_start) / 4; /* Copy 4 bytes at a time*/
+    Fls_ACEraseSize          = (__acfls_code_rom_end - __acfls_code_rom_start) / 8; /* Copy 8 bytes at a time*/
 
     Fls_ACWriteRomStart      = __acfls_code_rom_start;
     Fls_ACWriteRomEnd        = __acfls_code_rom_end;
-    Fls_ACWriteSize          = (__acfls_code_rom_end - __acfls_code_rom_start) / 4; /* Copy 4 bytes at a time*/
+    Fls_ACWriteSize          = (__acfls_code_rom_end - __acfls_code_rom_start) / 8; /* Copy 8 bytes at a time*/
 
     _ERASE_FUNC_ADDRESS_     = __acfls_code_ram_start;
     _WRITE_FUNC_ADDRESS_     = __acfls_code_ram_start;
 
     Mem_43_INFLS_ACEraseRomStart         = __acmem_43_infls_code_rom_start;
     Mem_43_INFLS_ACEraseRomEnd           = __acmem_43_infls_code_rom_end;
-    Mem_43_INFLS_ACEraseSize             = ((__acmem_43_infls_code_rom_end - __acmem_43_infls_code_rom_start)+3) / 4; /* Copy 4 bytes at a time*/
+    Mem_43_INFLS_ACEraseSize             = (__acmem_43_infls_code_rom_end - __acmem_43_infls_code_rom_start) / 8; /* Copy 8 bytes at a time*/
 
     Mem_43_INFLS_ACWriteRomStart         = __acmem_43_infls_code_rom_start;
     Mem_43_INFLS_ACWriteRomEnd           = __acmem_43_infls_code_rom_end;
-    Mem_43_INFLS_ACWriteSize             = ((__acmem_43_infls_code_rom_end - __acmem_43_infls_code_rom_start)+3) / 4; /* Copy 4 bytes at a time*/
+    Mem_43_INFLS_ACWriteSize             = (__acmem_43_infls_code_rom_end - __acmem_43_infls_code_rom_start) / 8; /* Copy 8 bytes at a time*/
 
     _MEM_43_INFLS_ERASE_FUNC_ADDRESS_    = __acmem_43_infls_code_ram_start;
     _MEM_43_INFLS_WRITE_FUNC_ADDRESS_    = __acmem_43_infls_code_ram_start;
@@ -356,6 +350,7 @@ SECTIONS
 
     __INDEX_COPY_CORE2       = 3;    /* This symbol is used to initialize data of ITCM/DTCM for CORE2 */
 
-    ASSERT(__standby_ram_end__ <= __STANDBY_RAM_LIMIT_END, "Memory for standby ram overflow")
+    ASSERT(__tcm_code_rom_end <= ORIGIN(int_pappflash) + LENGTH(int_pappflash), "Flash for code overflow")
 
+    ASSERT(__standby_ram_end__ <= __STANDBY_RAM_LIMIT_END, "Memory for standby ram overflow")
 }

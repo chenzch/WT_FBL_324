@@ -45,7 +45,8 @@ MEMORY
 {
     int_pfblflash           : ORIGIN = 0x00400000, LENGTH = 0x00100000    /* 1024KB */
     int_pappflash           : ORIGIN = 0x00500000, LENGTH = 0x002D4000    /* 3072KB - 176KB (sBAF + HSE)*/
-    int_dflash              : ORIGIN = 0x10000000, LENGTH = 0x00020000    /* 128KB */
+    int_dbootheader         : ORIGIN = 0x10000000, LENGTH = 0x00000218    /* 536B */
+    int_dflash              : ORIGIN = 0x10000218, LENGTH = 0x0001FDE8    /* 128KB - 536B */
     int_itcm                : ORIGIN = 0x00000000, LENGTH = 0x00008000    /* 32KB */
     int_dtcm                : ORIGIN = 0x20000000, LENGTH = 0x0000F000    /* 60KB */
     int_stack_dtcm          : ORIGIN = 0x2000F000, LENGTH = 0x00001000    /* 4KB */
@@ -57,6 +58,10 @@ MEMORY
     ram_rsvd2               : ORIGIN = 0x20443FF0, LENGTH = 0x00000000    /* End of SRAM */
     int_exchange            : ORIGIN = 0x20443FF0, LENGTH = 0x00000010    /* 16B, exchange area */
 }
+
+TARGET(binary) /* specify the file format of binary file */
+INPUT (..\..\Application\Release_FLASH\Application.bin)
+OUTPUT_FORMAT(default) /* restore the out file format */
 
 SECTIONS
 {
@@ -112,13 +117,14 @@ SECTIONS
     .pappflash :
     {
         __applEntrance = .;
+        ..\..\Application\Release_FLASH\Application.bin
     } > int_pappflash
 
-    .dflash :
+    .bootheader :
     {
         KEEP(*(.boot_header))
         /* . = ALIGN(8192); */ /* The minimum erase size of C40 Flash IP is 8kb */
-    } > int_dflash
+    } > int_dbootheader
 
     .sram_bss (NOLOAD) :
     {
