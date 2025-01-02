@@ -1,29 +1,29 @@
 /*==================================================================================================
 *   Project              : RTD AUTOSAR 4.7
 *   Platform             : CORTEXM
-*   Peripheral           :
+*   Peripheral           : 
 *   Dependencies         : none
 *
 *   Autosar Version      : 4.7.0
 *   Autosar Revision     : ASR_REL_4_7_REV_0000
 *   Autosar Conf.Variant :
-*   SW Version           : 4.0.0
-*   Build Version        : S32K3_RTD_4_0_0_HF01_D2401_ASR_REL_4_7_REV_0000_20240116
+*   SW Version           : 5.0.0
+*   Build Version        : S32K3_RTD_5_0_0_D2408_ASR_REL_4_7_REV_0000_20241002
 *
 *   Copyright 2020 - 2024 NXP
 *
-*   NXP Confidential. This software is owned or controlled by NXP and may only be
-*   used strictly in accordance with the applicable license terms. By expressly
-*   accepting such terms or by downloading, installing, activating and/or otherwise
-*   using the software, you are agreeing that you have read, and that you agree to
-*   comply with and are bound by, such license terms. If you do not agree to be
+*   NXP Confidential and Proprietary. This software is owned or controlled by NXP and may only be 
+*   used strictly in accordance with the applicable license terms.  By expressly 
+*   accepting such terms or by downloading, installing, activating and/or otherwise 
+*   using the software, you are agreeing that you have read, and that you agree to 
+*   comply with and are bound by, such license terms.  If you do not agree to be 
 *   bound by the applicable license terms, then you may not retain, install,
 *   activate or otherwise use the software.
-*/
+==================================================================================================*/
 /*==================================================================================================
 *
 *   @file    exceptions.c
-*   @version 4.0.0
+*   @version 5.0.0
 *
 *   @brief   AUTOSAR Platform - Interrupts table.
 *   @details Interrupts table.
@@ -43,15 +43,15 @@ extern "C" {
 #define PLATFORM_START_SEC_CODE
 #include "Platform_MemMap.h"
 
-void NMI_Handler(void) __attribute__((weak));        /* NMI Handler */
-void HardFault_Handler(void) __attribute__((weak));  /* Hard Fault Handler */
-void MemManage_Handler(void) __attribute__((weak));  /* Reserved */
-void BusFault_Handler(void) __attribute__((weak));   /* Bus Fault Handler */
-void UsageFault_Handler(void) __attribute__((weak)); /* Usage Fault Handler */
-void DebugMon_Handler(void) __attribute__((weak));   /* Debug Monitor Handler */
-void PendSV_Handler(void) __attribute__((weak));     /* PendSV Handler */
-void SysTick_Handler(void) __attribute__((weak));    /* SysTick Handler */
-
+void NMI_Handler(void)                  __attribute__ ((weak));               /* NMI Handler */
+void HardFault_Handler(void)            __attribute__ ((weak));         /* Hard Fault Handler */
+void MemManage_Handler(void)            __attribute__ ((weak));         /* Reserved */
+void BusFault_Handler(void)             __attribute__ ((weak));          /* Bus Fault Handler */
+void UsageFault_Handler(void)           __attribute__ ((weak));        /* Usage Fault Handler */
+void DebugMon_Handler(void)             __attribute__ ((weak));          /* Debug Monitor Handler */
+void PendSV_Handler(void)               __attribute__ ((weak));            /* PendSV Handler */
+void SysTick_Handler(void)              __attribute__ ((weak));           /* SysTick Handler */
+void undefined_handler(void);         /* Undefined Handler */
 #ifdef MCAL_ENABLE_USER_MODE_SUPPORT
 void SVCHandler_main(uint32 * svc_args);
 void Suspend_Interrupts(void);
@@ -178,6 +178,10 @@ void SysTick_Handler(void)
 {
     while(TRUE){};
 }
+void undefined_handler(void)
+{
+   while(TRUE){};
+}
 
 #define PLATFORM_STOP_SEC_CODE
 #include "Platform_MemMap.h"
@@ -185,3 +189,6 @@ void SysTick_Handler(void)
 #ifdef __cplusplus
 }
 #endif
+
+
+
