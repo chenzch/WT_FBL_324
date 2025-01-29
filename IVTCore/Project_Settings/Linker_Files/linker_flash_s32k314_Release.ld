@@ -42,9 +42,9 @@ ENTRY(Reset_Handler)
 
 MEMORY
 {
-    int_ivtcore             : ORIGIN = 0x10000000, LENGTH = 0x00002000    /* 8KB */
+    int_ivtcore             : ORIGIN = 0x10000000, LENGTH = 0x00004000    /* 16KB */
     int_itcm                : ORIGIN = 0x00000000, LENGTH = 0x00007F80    /* 32KB */
-    int_basecode            : ORIGIN = 0x00007F00, LENGTH = 0x00000100    /*  */
+    int_basecode            : ORIGIN = 0x00007F80, LENGTH = 0x00000080    /* 128 */
     int_dtcm                : ORIGIN = 0x20000000, LENGTH = 0x0000FF00    /* 60KB */
     int_stack_dtcm          : ORIGIN = 0x2000FF00, LENGTH = 0x00000100    /* 4KB */
     int_sram_edata          : ORIGIN = 0x20443FF0, LENGTH = 0x00000010    /* Exchange data section */
@@ -73,15 +73,19 @@ SECTIONS
         *(.text*)
         . = ALIGN(4);
         *(.mcal_text)
+        *(.mcal_text.*)
         . = ALIGN(4);
         *(.acmcu_code_rom)
+        *(.acmcu_code_rom.*)
         . = ALIGN(4);
         __acfls_code_rom_start = .;
         *(.acfls_code_rom)
+        *(.acfls_code_rom.*)
         . = ALIGN(4);
         __acfls_code_rom_end = .;
         __acmem_43_infls_code_rom_start = .;
         *(.acmem_43_infls_code_rom)
+        *(.acmem_43_infls_code_rom.*)
         . = ALIGN(4);
         __acmem_43_infls_code_rom_end = .;
         KEEP(*(.init))
@@ -92,8 +96,10 @@ SECTIONS
         *(.rodata*)
         . = ALIGN(4);
         *(.mcal_const_cfg)
+        *(.mcal_const_cfg.*)
         . = ALIGN(4);
         *(.mcal_const)
+        *(.mcal_const.*)
     } > int_ivtcore
 
     .copy.table :
@@ -147,6 +153,7 @@ SECTIONS
         . = ALIGN(8);
         __standby_ram_begin__ = .;
         *(.standby_data)
+        *(.standby_data.*)
         . = ALIGN(8);
         __standby_ram_end__ = .;
         . = ALIGN(16);
@@ -155,7 +162,9 @@ SECTIONS
         *(.bss*)
         . = ALIGN(16);
         *(.mcal_bss)
+        *(.mcal_bss.*)
         *(.mcal_bss_no_cacheable)
+        *(.mcal_bss_no_cacheable.*)
         . = ALIGN(8);
         __sram_bss_end = .;
     } > int_dtcm
@@ -166,11 +175,13 @@ SECTIONS
         __sram_data_begin__ = .;
         . = ALIGN(4);
         *(.ramcode)
+        *(.ramcode.*)
         . = ALIGN(4);
         *(.data)
-        *(.data*)
+        *(.data.*)
         . = ALIGN(4);
         *(.mcal_data)
+        *(.mcal_data.*)
         . = ALIGN(8);
         __sram_data_end__ = .;
     } > int_dtcm
@@ -218,8 +229,8 @@ SECTIONS
     {
         . = ALIGN(8);
         __base_code_start__ = .;
-        KEEP(*(.basecodeentry))
-        KEEP(*(.basecode))
+        KEEP(*(.basecodeentry*))
+        KEEP(*(.basecode*))
         . = ALIGN(8);
         __base_code_end__ = .;
     } > int_basecode
